@@ -1,7 +1,8 @@
-import { Avatar, Container, Paper, Typography, Box, TextField, FormControlLabel, Checkbox, Button, Grid2, Link, } from "@mui/material";
+import React, { useState } from "react";
+import { Avatar, Container, Paper, Typography, Box, TextField, FormControlLabel, Checkbox, Button, Grid2, Link } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import { Link as RouterLink } from "react-router-dom";  // Import react-router-dom's Link
-import { useState } from "react"; // Import useState for managing form state
+import { Link as RouterLink } from "react-router-dom"; 
+import { loginUser } from './api';  // Import the API call function
 import Logo from './logo.png';
 
 const LoginPage = () => {
@@ -9,8 +10,9 @@ const LoginPage = () => {
     const [password, setPassword] = useState("");
     const [emailError, setEmailError] = useState("");
     const [passwordError, setPasswordError] = useState("");
+    const [apiError, setApiError] = useState("");  // To store API errors
 
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         
         let hasError = false;
@@ -20,18 +22,25 @@ const LoginPage = () => {
         } else {
             setEmailError("");
         }
-
+    
         if (password.length < 6) {
             setPasswordError("Password must be at least 6 characters");
             hasError = true;
         } else {
             setPasswordError("");
         }
-
+    
         if (!hasError) {
-            console.log("Form submitted");
+            try {
+                const result = await loginUser(email, password);
+                console.log("Login successful:", result);
+                // Handle successful login, e.g., redirect or show success message
+            } catch (error) {
+                setApiError("Login failed. Please check your credentials.");
+            }
         }
     };
+    
 
     return (
         <Container 
@@ -42,7 +51,7 @@ const LoginPage = () => {
                 alignItems: 'center', 
                 justifyContent: 'center', 
                 minHeight: '100vh',
-                padding: 2 // Optional: Adjust padding if needed
+                padding: 2 
             }}
         >
             <Box sx={{ 
@@ -115,9 +124,14 @@ const LoginPage = () => {
                     >
                         Sign in 
                     </Button>
+
+                    {apiError && (
+                        <Typography color="error" sx={{ mt: 2 }}>
+                            {apiError}
+                        </Typography>
+                    )}
                 </Box>
 
-              
                 <Grid2 container justifyContent='space-between' sx={{ mt: 2 }}>
                     <Grid2>
                         <Link 
