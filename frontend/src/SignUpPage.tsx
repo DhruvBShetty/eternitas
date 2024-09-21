@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Avatar, Container, Paper, Typography, Box, TextField, Button, Grid2, Link } from "@mui/material";
 import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
 import { Link as RouterLink } from "react-router-dom";
-import { registerUser } from './api';  // Import the API call function
 
 const SignUpPage = () => {
     const [email, setEmail] = useState("");
@@ -11,7 +10,24 @@ const SignUpPage = () => {
     const [emailError, setEmailError] = useState("");
     const [passwordError, setPasswordError] = useState("");
     const [confirmPasswordError, setConfirmPasswordError] = useState("");
-    const [apiError, setApiError] = useState("");  // To store API errors
+    const [apiError, setApiError] = useState(""); 
+
+    // Add registerUser function
+    const registerUser = async (email: string, password: string) => {
+        const response = await fetch('http://localhost:5000/api/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to register user');
+        }
+
+        return response.json();
+    };
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -39,10 +55,8 @@ const SignUpPage = () => {
         }
 
         if (!hasError) {
-            // Submit the form data to your backend here
             try {
                 await registerUser(email, password);
-                // Handle successful registration, e.g., redirect to login page or show success message
                 console.log("Registration successful");
             } catch (error) {
                 setApiError("Registration failed. Please try again.");
@@ -58,7 +72,7 @@ const SignUpPage = () => {
                 flexDirection: 'column', 
                 alignItems: 'center', 
                 justifyContent: 'center', 
-                minHeight: '100vh',
+                minHeight: '90vh',
                 padding: 2 
             }}
         >

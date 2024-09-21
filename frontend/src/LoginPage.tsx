@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Avatar, Container, Paper, Typography, Box, TextField, FormControlLabel, Checkbox, Button, Grid2, Link } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { Link as RouterLink } from "react-router-dom"; 
-import { loginUser } from './api';  // Import the API call function
+import { loginUser } from './api';  
 import Logo from './logo.png';
 
 const LoginPage = () => {
@@ -10,7 +10,7 @@ const LoginPage = () => {
     const [password, setPassword] = useState("");
     const [emailError, setEmailError] = useState("");
     const [passwordError, setPasswordError] = useState("");
-    const [apiError, setApiError] = useState("");  // To store API errors
+    const [apiError, setApiError] = useState(""); 
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -34,7 +34,6 @@ const LoginPage = () => {
             try {
                 const result = await loginUser(email, password);
                 console.log("Login successful:", result);
-                // Handle successful login, e.g., redirect or show success message
             } catch (error) {
                 setApiError("Login failed. Please check your credentials.");
             }
@@ -50,13 +49,13 @@ const LoginPage = () => {
                 flexDirection: 'column', 
                 alignItems: 'center', 
                 justifyContent: 'center', 
-                minHeight: '100vh',
+                minHeight: '60vh',
                 padding: 2 
             }}
         >
             <Box sx={{ 
                 mb: { xs: 8, sm: 12, md: 16 }, 
-                mt: { xs: 4, sm: -15, md: 12 },
+                mt: { xs: 4, sm: 5, md: 12 },
                 display: "flex",
                 justifyContent: 'center'
             }}>
