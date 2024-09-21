@@ -2,10 +2,14 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
 
-# Simulated user storage (in-memory, not for production use)
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
+
 users = {}
+
+@app.route('/test-cors', methods=['GET'])
+def test_cors():
+    return jsonify(message="CORS is working"), 200
 
 @app.route('/')
 def home():
