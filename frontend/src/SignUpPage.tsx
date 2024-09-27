@@ -13,24 +13,24 @@ const SignUpPage = () => {
     const [passwordError, setPasswordError] = useState("");
     const [confirmPasswordError, setConfirmPasswordError] = useState("");
     const [apiError, setApiError] = useState(""); 
-
-    // Add registerUser function
+    
     const registerUser = async (email: string, password: string) => {
-        const response = await fetch('http://localhost:5000/api/register', {
+        const response = await fetch('http://localhost:8000/api/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ email, password },
+            )
         });
-
+    
         if (!response.ok) {
-            throw new Error('Failed to register user');
+            const errorData = await response.json();
+            throw new Error(errorData.message);
         }
-
+    
         return response.json();
     };
-
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         
