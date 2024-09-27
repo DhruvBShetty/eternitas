@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { Avatar, Container, Paper, Typography, Box, TextField, FormControlLabel, Checkbox, Button, Grid2, Link } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import { Link as RouterLink } from "react-router-dom"; 
+import { Link as RouterLink, useNavigate } from "react-router-dom"; // Ensure useNavigate is imported
 import { loginUser } from './api';  
-import Logo from './logo.png';
+import Logo from './logo.png';  // Import your existing logo
 
 const LoginPage = () => {
+    const navigate = useNavigate(); // Hook for navigation
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [emailError, setEmailError] = useState("");
@@ -40,6 +41,9 @@ const LoginPage = () => {
         }
     };
     
+    const handleLogoClick = () => {
+        navigate('/'); // Navigate to the splash screen route
+    };
 
     return (
         <Container 
@@ -53,12 +57,16 @@ const LoginPage = () => {
                 padding: 2 
             }}
         >
-            <Box sx={{ 
-                mb: { xs: 8, sm: 12, md: 16 }, 
-                mt: { xs: 4, sm: 5, md: 12 },
-                display: "flex",
-                justifyContent: 'center'
-            }}>
+            <Box 
+                sx={{ 
+                    mb: { xs: 8, sm: 12, md: 16 }, 
+                    mt: { xs: 4, sm: 5, md: 12 },
+                    display: "flex",
+                    justifyContent: 'center',
+                    cursor: 'pointer' // Change cursor to pointer for visual feedback
+                }}
+                onClick={handleLogoClick} // Add onClick event
+            >
                 <img 
                     src={Logo} 
                     alt="Logo"

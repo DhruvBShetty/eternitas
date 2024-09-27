@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { Avatar, Container, Paper, Typography, Box, TextField, Button, Grid2, Link } from "@mui/material";
 import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
 import { Link as RouterLink } from "react-router-dom";
+import Logo from './logo.png';  // Import your existing logo
+
 
 const SignUpPage = () => {
     const [email, setEmail] = useState("");
