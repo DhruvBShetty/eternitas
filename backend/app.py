@@ -3,32 +3,14 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 
-CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
+# CORS configuration for all routes and methods
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000", "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"], "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "X-API-KEY"]}})
 
 users = {}
 
-@app.route('/test-cors', methods=['GET'])
-def test_cors():
-    return jsonify(message="CORS is working"), 200
-
 @app.route('/')
 def home():
-    return jsonify(message="Welcome to the Flask API")
-
-@app.route('/api/data', methods=['GET'])
-def get_data():
-    return jsonify(data={"key": "value"})
-
-@app.route('/api/login', methods=['POST'])
-def login():
-    data = request.json
-    email = data.get('email')
-    password = data.get('password')
-
-    if email in users and users[email] == password:
-        return jsonify(message="Login successful")
-    else:
-        return jsonify(message="Invalid email or password"), 401
+    return jsonify(message="Welcome to the Flask API, Ovidiu")
 
 @app.route('/api/register', methods=['POST'])
 def register():
@@ -42,5 +24,5 @@ def register():
     users[email] = password
     return jsonify(message="User registered successfully"), 201
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
