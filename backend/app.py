@@ -1,10 +1,9 @@
 from flask import Flask, jsonify, request
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
-
-# CORS configuration for all routes and methods
-CORS(app, resources={r"/*": {"origins": "http://localhost:3000", "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"], "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "X-API-KEY"]}})
+CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 users = {}
 
@@ -13,6 +12,7 @@ def home():
     return jsonify(message="Welcome to the Flask API, Ovidiu")
 
 @app.route('/api/register', methods=['POST'])
+@cross_origin()
 def register():
     data = request.json
     email = data.get('email')
