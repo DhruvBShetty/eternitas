@@ -1,24 +1,20 @@
 import { Avatar, Container, Paper, Typography, Box, TextField, Button, Grid2, Link } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import { Link as RouterLink } from "react-router-dom"; // Import react-router-dom's Link
-import { useState } from "react"; // Import useState for managing form state
+import { Link as RouterLink } from "react-router-dom"; 
+import { useState } from "react"; 
 
 const ForgotPasswordPage = () => {
-    // State for email input and error message
     const [email, setEmail] = useState("");
     const [emailError, setEmailError] = useState("");
 
-    // Handle form submission
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        // Basic email validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             setEmailError("Please enter a valid email address");
         } else {
             setEmailError("");
-            // Process the email submission here
             console.log("Email submitted:", email);
         }
     };

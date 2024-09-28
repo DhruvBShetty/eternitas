@@ -6,9 +6,7 @@ const SplashScreen = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Navigate to login page after 5 seconds
     const timer = setTimeout(() => {
-      // Set item in local storage to indicate splash screen has been shown
       localStorage.setItem('splashShown', 'true');
       navigate('/login');
     }, 4000);

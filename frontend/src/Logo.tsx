@@ -1,14 +1,13 @@
-// Logo.tsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Typography } from '@mui/material';
-import logo from './logo.png'; // Adjust the path if necessary
+import logo from './logo.png'; 
 
 const Logo = () => {
-    const navigate = useNavigate(); // Hook to programmatically navigate
+    const navigate = useNavigate(); 
 
     const handleLogoClick = () => {
-        navigate("/"); // Navigate to the splash screen
+        navigate("/");
     };
 
     return (

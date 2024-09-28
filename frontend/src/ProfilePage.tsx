@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Container, Typography, Button, Box, CircularProgress, Snackbar, Alert, Avatar, Grid } from '@mui/material';
-import Grid2 from '@mui/material/Grid2'; // Ensure this import is correct for your version
+import Grid2 from '@mui/material/Grid2';
 
 const ProfilePage = () => {
     const [profilePic, setProfilePic] = useState<File | null>(null);
