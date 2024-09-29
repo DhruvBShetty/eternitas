@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { Avatar, Container, Paper, Typography, Box, TextField, Button, Grid2, Link } from "@mui/material";
+import { Avatar, Container, Paper, Typography, Box, TextField, Button, Grid2, Link, IconButton } from "@mui/material";
 import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
-import { Link as RouterLink } from "react-router-dom";
-import Logo from './logo.png';  
-
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import { Link as RouterLink, useNavigate } from "react-router-dom";
+import Logo from './logo.png';
 
 const SignUpPage = () => {
     const [email, setEmail] = useState("");
@@ -12,16 +13,20 @@ const SignUpPage = () => {
     const [emailError, setEmailError] = useState("");
     const [passwordError, setPasswordError] = useState("");
     const [confirmPasswordError, setConfirmPasswordError] = useState("");
+    const [showPassword, setShowPassword] = useState(false); 
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [apiError, setApiError] = useState(""); 
-    
+    const [successMessage, setSuccessMessage] = useState("");
+
+    const navigate = useNavigate(); 
+
     const registerUser = async (email: string, password: string) => {
         const response = await fetch('http://localhost:8000/api/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ email, password },
-            )
+            body: JSON.stringify({ email, password })
         });
     
         if (!response.ok) {
@@ -31,6 +36,7 @@ const SignUpPage = () => {
     
         return response.json();
     };
+
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         
@@ -58,10 +64,17 @@ const SignUpPage = () => {
 
         if (!hasError) {
             try {
-                await registerUser(email, password);
-                console.log("Registration successful");
+                const result = await registerUser(email, password);
+                setSuccessMessage("Registration successful! Please verify your email.");
+                setApiError(""); 
+                
+                // Redirect to login after a short delay
+                setTimeout(() => {
+                    navigate("/login");
+                }, 3000);
             } catch (error) {
                 setApiError("Registration failed. Please try again.");
+                setSuccessMessage(""); 
             }
         }
     };
@@ -110,24 +123,46 @@ const SignUpPage = () => {
                         placeholder="Enter password" 
                         fullWidth 
                         required 
-                        type="password"
+                        type={showPassword ? "text" : "password"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         error={!!passwordError}
                         helperText={passwordError}
                         sx={{ mb: 2 }}
+                        InputProps={{
+                            endAdornment: (
+                                <IconButton
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    edge="end"
+                                    aria-label="toggle password visibility"
+                                >
+                                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                                </IconButton>
+                            ),
+                        }}
                     />
 
                     <TextField 
                         placeholder="Confirm password" 
                         fullWidth 
                         required 
-                        type="password"
+                        type={showConfirmPassword ? "text" : "password"} 
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         error={!!confirmPasswordError}
                         helperText={confirmPasswordError}
                         sx={{ mb: 2 }}
+                        InputProps={{
+                            endAdornment: (
+                                <IconButton
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    edge="end"
+                                    aria-label="toggle confirm password visibility"
+                                >
+                                    {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                                </IconButton>
+                            ),
+                        }}
                     />
 
                     <Button 
@@ -147,6 +182,12 @@ const SignUpPage = () => {
                     {apiError && (
                         <Typography color="error" sx={{ mt: 2 }}>
                             {apiError}
+                        </Typography>
+                    )}
+                    
+                    {successMessage && (
+                        <Typography color="success.main" sx={{ mt: 2 }}>
+                            {successMessage}
                         </Typography>
                     )}
                 </Box>

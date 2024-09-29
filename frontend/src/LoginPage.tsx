@@ -1,6 +1,8 @@
 import React, { useState } from "react";
-import { Avatar, Container, Paper, Typography, Box, TextField, FormControlLabel, Checkbox, Button, Grid2, Link } from "@mui/material";
+import { Avatar, Container, Paper, Typography, Box, TextField, FormControlLabel, Checkbox, Button, Grid2, Link, IconButton } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { Link as RouterLink, useNavigate } from "react-router-dom"; 
 import { loginUser } from './api';  
 import Logo from './logo.png';  
@@ -12,6 +14,7 @@ const LoginPage = () => {
     const [emailError, setEmailError] = useState("");
     const [passwordError, setPasswordError] = useState("");
     const [apiError, setApiError] = useState(""); 
+    const [showPassword, setShowPassword] = useState(false); 
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -106,11 +109,23 @@ const LoginPage = () => {
                         placeholder="Enter password" 
                         fullWidth 
                         required 
-                        type="password"
+                        type={showPassword ? "text" : "password"} 
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         error={!!passwordError}
                         helperText={passwordError}
+                        sx={{ mb: 2 }}
+                        InputProps={{
+                            endAdornment: (
+                                <IconButton
+                                    onClick={() => setShowPassword(!showPassword)} 
+                                    edge="end"
+                                    aria-label="toggle password visibility"
+                                >
+                                    {showPassword ? <VisibilityOff /> : <Visibility />} 
+                                </IconButton>
+                            ),
+                        }}
                     />
 
                     <FormControlLabel 

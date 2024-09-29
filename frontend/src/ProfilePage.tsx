@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
-import { Container, Typography, Button, Box, CircularProgress, Snackbar, Alert, Avatar, Grid } from '@mui/material';
-import Grid2 from '@mui/material/Grid2';
+import React, { useState } from "react";
+import { useLocation } from "react-router-dom";
+import { Container, Typography, Button, Box, CircularProgress, Snackbar, Alert, Avatar, Grid } from "@mui/material";
 
 const ProfilePage = () => {
+    const location = useLocation();
+    const profileData = location.state;
+
     const [profilePic, setProfilePic] = useState<File | null>(null);
     const [mediaFiles, setMediaFiles] = useState<File[]>([]);
     const [loading, setLoading] = useState(false);
@@ -21,6 +24,17 @@ const ProfilePage = () => {
             const filesArray = Array.from(event.target.files);
             setMediaFiles((prev) => [...prev, ...filesArray]);
         }
+    };
+
+    const handleEditMedia = (index: number) => {
+        console.log("Edit media at index:", index);
+    };
+
+    const handleDeleteMedia = (index: number) => {
+        setMediaFiles((prev) => prev.filter((_, i) => i !== index));
+        setSnackbarMessage('Media deleted successfully!');
+        setSnackbarSeverity('success');
+        setSnackbarOpen(true);
     };
 
     const handleUpload = async () => {
@@ -49,6 +63,12 @@ const ProfilePage = () => {
             const data = await response.json();
             setSnackbarMessage(data.message || 'Files uploaded successfully!');
             setSnackbarSeverity('success');
+
+            // If the upload is successful, update the profile picture state
+            if (data.profilePicUrl) { // Assuming the backend returns the new profile picture URL
+                setProfilePic(data.profilePicUrl); // Update with the new URL from the server
+            }
+
         } catch (error: unknown) {
             console.error('Upload error:', error);
             const errorMessage = (error instanceof Error) ? error.message : 'An error occurred during upload.';
@@ -64,26 +84,15 @@ const ProfilePage = () => {
         setSnackbarOpen(false);
     };
 
-    const handleEditMedia = (index: number) => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '*/*';
-        input.onchange = (event) => {
-            const target = event.target as HTMLInputElement;
-            if (target.files && target.files[0]) {
-                const newMediaFiles = [...mediaFiles];
-                newMediaFiles[index] = target.files[0];
-                setMediaFiles(newMediaFiles);
-            }
-        };
-        input.click();
-    };
-
-    const handleDeleteMedia = (index: number) => {
-        setMediaFiles((prev) => prev.filter((_, i) => i !== index));
-        setSnackbarMessage('File deleted successfully!');
-        setSnackbarSeverity('success');
-        setSnackbarOpen(true);
+    const calculateAge = (dob: string, deathDate?: string) => {
+        const birthDate = new Date(dob);
+        const deathDateObj = deathDate ? new Date(deathDate) : new Date();
+        let age = deathDateObj.getFullYear() - birthDate.getFullYear();
+        const monthDiff = deathDateObj.getMonth() - birthDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && deathDateObj.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        return age;
     };
 
     return (
@@ -127,6 +136,35 @@ const ProfilePage = () => {
                     </label>
                     <Box sx={{ width: '90%', borderBottom: '2px solid #ffca28', my: 2 }} />
                 </Box>
+
+                {profileData ? (
+                    <Box sx={{ mt: 3 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
+                            {profileData.firstName && (
+                                <Typography sx={{ mr: 1 }}>{profileData.firstName}</Typography>
+                            )}
+                            {profileData.middleName && (
+                                <Typography sx={{ mr: 1 }}>{profileData.middleName}</Typography>
+                            )}
+                            {profileData.lastName && (
+                                <Typography>{profileData.lastName}</Typography>
+                            )}
+                        </Box>
+                        {profileData.deathDate && (
+                            <Typography>
+                                <strong>Age:</strong> {calculateAge(profileData.dob, profileData.deathDate)} years
+                            </Typography>
+                        )}
+                        {profileData.relationship && (
+                            <Typography>{profileData.relationship}</Typography>
+                        )}
+                        {profileData.description && (
+                            <Typography>{profileData.description}</Typography>
+                        )}
+                    </Box>
+                ) : (
+                    <Typography>No profile information provided.</Typography>
+                )}
             </Box>
 
             <Box sx={{ mt: 3 }}>

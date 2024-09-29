@@ -14,10 +14,15 @@ const SplashScreen = () => {
     return () => clearTimeout(timer);
   }, [navigate]);
 
+  const isMobile = window.innerWidth < 768; 
+  const videoSource = isMobile 
+    ? `${process.env.PUBLIC_URL}/eternitas-mobile.mp4` 
+    : `${process.env.PUBLIC_URL}/eternitas.mp4`;
+
   return (
     <div className="splash-screen-container">
       <video autoPlay muted loop className="splash-video">
-        <source src={`${process.env.PUBLIC_URL}/eternitas.mp4`} type="video/mp4" />
+        <source src={videoSource} type="video/mp4" />
         Your browser does not support the video tag.
       </video>
     </div>
