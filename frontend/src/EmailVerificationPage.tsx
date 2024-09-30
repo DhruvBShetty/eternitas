@@ -1,37 +1,42 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Typography, Container } from "@mui/material";
 
 const EmailVerificationPage = () => {
-  const { token } = useParams();
-  const navigate = useNavigate();
-  const [verificationStatus, setVerificationStatus] = useState('Verifying...'); 
-  const [isVerified, setIsVerified] = useState(false); 
-  useEffect(() => {
-    const verifyEmail = async () => {
-      const response = await fetch(`http://localhost:8000/api/verify-email/${token}`, {
-        method: 'GET',
-      });
+    const { token } = useParams<{ token: string }>(); 
+    const [message, setMessage] = useState("");
+    const navigate = useNavigate();
 
-      if (response.ok) {
-        setIsVerified(true);
-        setVerificationStatus('Your email has been verified! Redirecting to profile setup...'); 
-        setTimeout(() => {
-          navigate('/profilepagesetup'); 
-        }, 3000);
-      } else {
-        setVerificationStatus('Email verification failed. Please try again.'); 
-      }
-    };
+    useEffect(() => {
+        const verifyEmail = async () => {
+            try {
+                const response = await fetch(`http://localhost:8000/api/verify_email/${token}`);
+                
+                if (!response.ok) {
+                    throw new Error("Email verification failed");
+                }
+                setMessage("Email verified successfully! Redirecting to profile setup...");
+                setTimeout(() => {
+                    navigate("/profilepagesetup");
+                }, 3000); 
 
-    verifyEmail();
-  }, [token, navigate]);
+            } catch (error) {
+                setMessage("Email verification failed. Please try again.");
+            }
+        };
 
-  return (
-    <div>
-      <h1>{verificationStatus}</h1> 
-      {!isVerified && <p>Waiting on email verification...</p>} 
-    </div>
-  );
+        if (token) {
+            verifyEmail();
+        }
+    }, [token, navigate]);
+
+    return (
+        <Container sx={{ mt: 4 }}>
+            <Typography variant="h4" align="center">
+                {message}
+            </Typography>
+        </Container>
+    );
 };
 
 export default EmailVerificationPage;

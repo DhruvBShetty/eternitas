@@ -16,7 +16,7 @@ const SplashScreen = () => {
 
   const isMobile = window.innerWidth < 768; 
   const videoSource = isMobile 
-    ? `${process.env.PUBLIC_URL}/eternitas-mobile.mp4` 
+    ? `${process.env.PUBLIC_URL}/eternitas_dog+man.mp4` 
     : `${process.env.PUBLIC_URL}/eternitas.mp4`;
 
   return (

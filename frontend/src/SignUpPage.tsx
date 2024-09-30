@@ -65,13 +65,8 @@ const SignUpPage = () => {
         if (!hasError) {
             try {
                 const result = await registerUser(email, password);
-                setSuccessMessage("Registration successful! Please verify your email.");
+                setSuccessMessage("Registration successful. Please check your email to verify your account.");
                 setApiError(""); 
-                
-                // Redirect to login after a short delay
-                setTimeout(() => {
-                    navigate("/login");
-                }, 3000);
             } catch (error) {
                 setApiError("Registration failed. Please try again.");
                 setSuccessMessage(""); 

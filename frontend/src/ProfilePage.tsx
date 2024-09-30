@@ -64,9 +64,8 @@ const ProfilePage = () => {
             setSnackbarMessage(data.message || 'Files uploaded successfully!');
             setSnackbarSeverity('success');
 
-            // If the upload is successful, update the profile picture state
-            if (data.profilePicUrl) { // Assuming the backend returns the new profile picture URL
-                setProfilePic(data.profilePicUrl); // Update with the new URL from the server
+            if (data.profilePicUrl) { 
+                setProfilePic(data.profilePicUrl); 
             }
 
         } catch (error: unknown) {
