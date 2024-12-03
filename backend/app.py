@@ -42,7 +42,7 @@ def generate_verification_token(email: str):
 
 
 def send_verification_email(email: str, token: str):
-    sender_email = "dbs5starstudy@gmail.com"#"xxoliverytxx@gmail.com" 
+    sender_email = "xxoliverytxx@gmail.com" 
     receiver_email = email
     subject = "Verify your email"
     verification_link = f"http://localhost:8000/api/verify_email/{token}" 
@@ -56,7 +56,7 @@ def send_verification_email(email: str, token: str):
 
     try:
         server = smtplib.SMTP_SSL('smtp.gmail.com', 465) 
-        server.login(sender_email,"btkh ffka xlrx hahq")#"wzhu kvqk nptu mcuv")  
+        server.login(sender_email,"wzhu kvqk nptu mcuv")  
         server.sendmail(sender_email, receiver_email, msg.as_string())
         server.quit()
     except Exception as e:
