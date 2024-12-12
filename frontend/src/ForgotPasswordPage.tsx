@@ -2,20 +2,27 @@ import { Avatar, Container, Paper, Typography, Box, TextField, Button, Grid2, Li
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { Link as RouterLink } from "react-router-dom"; 
 import { useState } from "react"; 
+import { resetpassword } from "./api";
 
-const ForgotPasswordPage = () => {
+export const ForgotPasswordPage = () => {
     const [email, setEmail] = useState("");
     const [emailError, setEmailError] = useState("");
+    const [emailmsg,setemailmsg] = useState("");
 
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async(event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             setEmailError("Please enter a valid email address");
         } else {
-            setEmailError("");
-            console.log("Email submitted:", email);
+            try{
+            await resetpassword(email);
+            setemailmsg(`Reset password link submitted`);
+            }
+            catch(error){
+            setemailmsg("Sorry something went wrong");
+            }
         }
     };
 
@@ -72,6 +79,11 @@ const ForgotPasswordPage = () => {
                     >
                         Submit
                     </Button>
+                    {emailmsg && (
+                        <Typography color="black" sx={{ mt: 2 }}>
+                            {emailmsg}
+                        </Typography>
+                    )}
                 </Box>
 
                 <Grid2 container justifyContent='center' sx={{ mt: 2 }}>

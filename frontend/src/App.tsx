@@ -7,6 +7,7 @@ import ProfilePage from './ProfilePage';
 import SplashScreen from './SplashScreen';  
 import ProfilePageSetup from './ProfilePageSetup'; 
 import EmailVerificationPage from './EmailVerificationPage'; 
+import ResetPasswordPage from './ResetPasswordPage';
 
 const App = () => {
   return (
@@ -19,7 +20,8 @@ const App = () => {
         <Route path="/profilepage" element={<ProfilePage />} /> 
         <Route path="/forgot" element={<ForgotPasswordPage />} />
         <Route path="/profilepagesetup" element={<ProfilePageSetup />} />
-        <Route path="/verify-email/:token" element={<EmailVerificationPage />} /> 
+        {/* <Route path="/verify-email/:token" element={<EmailVerificationPage />} />  */}
+        <Route path="/Reset-password" element={<ResetPasswordPage/>}/>
       </Routes>
     </Router>
   );

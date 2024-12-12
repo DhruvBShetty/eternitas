@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends,Request,Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import smtplib 
@@ -6,14 +6,29 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import jwt  
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
+from supabase import create_client
+import os
+from gotrue.errors import AuthApiError
+from datetime import date
+import bcrypt
+from fastapi.security import HTTPBearer
+import json
+from postgrest.exceptions import APIError
+load_dotenv()
 
 app = FastAPI()
+security = HTTPBearer()
+url= os.environ.get("SUPABASE_URL")
+key= os.environ.get("SUPABASE_KEY")
+supabase= create_client(url, key)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization", "X-Requested-With", "X-API-KEY"],
+    allow_credentials=True
 )
 
 users = {}  
@@ -22,6 +37,13 @@ SECRET_KEY = "your_secret_key"
 class User(BaseModel):
     email: str
     password: str
+
+class Email(BaseModel):
+    email:str
+
+class Password(BaseModel):
+    password:str
+    token: str = Depends(security)
 
 @app.get("/")
 async def home():
@@ -56,32 +78,60 @@ def send_verification_email(email: str, token: str):
 
 @app.post("/api/register")
 async def register(user: User):
-    if user.email in users:
-        raise HTTPException(status_code=400, detail="User already exists")
 
-    users[user.email] = {"password": user.password, "verified": False}
+    salt=bcrypt.gensalt(rounds=8)
+    password=user.password.encode('utf-8')
+    hash=str(bcrypt.hashpw(password, salt))
 
-    verification_token = generate_verification_token(user.email)
-
-    send_verification_email(user.email, verification_token)
-
+    try:
+        acc=supabase.table("Account").insert([{"created_at":date.today().strftime("%Y-%m-%d"),"email":user.email,"password":hash}]).execute()
+    except APIError as e:
+        raise HTTPException(status_code=400, detail=e.details)
+        
+    user=supabase.auth.sign_up({"email": user.email, "password": user.password})
     return {"message": "Registration successful. Please check your email to verify your account."}
 
-@app.get("/api/verify_email/{token}")
-async def verify_email(token: str):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        email = payload.get("email")
-        if email not in users:
-            raise HTTPException(status_code=400, detail="Invalid token")
 
-        users[email]["verified"] = True
-        return {"message": "Email verified successfully. You can now proceed to profile setup."}
+@app.post("/api/login")
+async def login(user:User):
+    try:
+        session=supabase.auth.sign_in_with_password({"email":user.email,"password":user.password})
+    except Exception as e:
+        raise HTTPException(status_code=e.status, detail=e.message)
     
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=400, detail="Token has expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=400, detail="Invalid token")
+    return session
+
+@app.post("/api/forgotpassword")
+async def forgotpassword(email:Email):
+    try:
+       supabase.auth.reset_password_for_email(email.email, {"redirect_to": "http://localhost:3000/Reset-password",})
+    except Exception as e:
+        raise HTTPException(status_code=e.status, detail=e.message)
+
+@app.post("/api/updatepassword")
+async def updatepassword(request:Request):
+
+    access_token=request.cookies.get('access_token')
+    refresh_token=request.cookies.get('refresh_token')
+
+    session = supabase.auth.set_session(access_token, refresh_token)
+    data = await request.json()
+    password=data.get('password')
+
+    try:
+        upd_pass=supabase.auth.update_user({"password": password})
+    except Exception as e:
+        raise HTTPException(status_code=e.status, detail=e.message)
+    
+    try:
+        salt=bcrypt.gensalt(rounds=8)
+        password=password.encode('utf-8')
+        hash=str(bcrypt.hashpw(password, salt))
+        upd_public=supabase.table("Account").update({"password":hash}).eq("email",session.user.email).execute()
+    except Exception as e:
+        raise HTTPException(status_code=e.status, detail=e.message)
+
+    
 
 if __name__ == "__main__":
     import uvicorn

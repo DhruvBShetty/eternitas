@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Avatar, Container, Paper, Typography, Box, TextField, FormControlLabel, Checkbox, Button, Grid2, Link, IconButton } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import Visibility from '@mui/icons-material/Visibility';
@@ -7,16 +7,20 @@ import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { loginUser } from './api';  
 import Logo from './logo.png';  
 
+
 const LoginPage = () => {
     const navigate = useNavigate(); 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [emailError, setEmailError] = useState("");
-    const [passwordError, setPasswordError] = useState("");
+    const [emailError, setEmailError] = useState(" ");
+    const [passwordError, setPasswordError] = useState(" ");
     const [apiError, setApiError] = useState(""); 
     const [showPassword, setShowPassword] = useState(false); 
+    const [user,setUser]=useState(null);
 
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    console.log(user);
+    
+    const handleSubmit = async(event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         
         let hasError = false;
@@ -36,17 +40,18 @@ const LoginPage = () => {
     
         if (!hasError) {
             try {
-                const result = await loginUser(email, password);
-                console.log("Login successful:", result);
+                await loginUser(email, password).then(res=>{
+                    setUser(res);
+                });
+                console.log("Login successful:", user);
+                navigate('/profilepage')
             } catch (error) {
-                setApiError("Login failed. Please check your credentials.");
+                setApiError(`${error}`);
             }
+            
         }
     };
     
-    const handleLogoClick = () => {
-        navigate('/'); 
-    };
 
     return (
         <Container 
@@ -68,7 +73,6 @@ const LoginPage = () => {
                     justifyContent: 'center',
                     cursor: 'pointer' 
                 }}
-                onClick={handleLogoClick} 
             >
                 <img 
                     src={Logo} 

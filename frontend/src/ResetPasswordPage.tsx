@@ -1,36 +1,35 @@
-import React, { useState } from "react";
-import { Avatar, Container, Paper, Typography, Box, TextField, Button, Grid2, Link, IconButton } from "@mui/material";
-import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
+import { Avatar, Container, Paper, Typography, Box, TextField, Button, Grid2, Link,IconButton } from "@mui/material";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import { Link as RouterLink, useNavigate } from "react-router-dom";
-import { registerUser } from "./api";
-import Logo from './logo.png';
+import { Link as RouterLink } from "react-router-dom"; 
+import { useState } from "react"; 
+import { updatepassword } from "./api";
 
-const SignUpPage = () => {
-    const [email, setEmail] = useState("");
+
+const url = window.location.href;
+const urlParams = new URLSearchParams(url.split('#')[1]);
+const accessToken = urlParams.get('access_token');
+const refreshToken = urlParams.get('refresh_token');
+
+document.cookie = `access_token=${accessToken}; SameSite=Strict;`;
+document.cookie = `refresh_token=${refreshToken}; SameSite=Strict;`;
+
+const ResetPasswordPage = () => {
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false); 
     const [confirmPassword, setConfirmPassword] = useState("");
-    const [emailError, setEmailError] = useState("");
     const [passwordError, setPasswordError] = useState("");
     const [confirmPasswordError, setConfirmPasswordError] = useState("");
-    const [showPassword, setShowPassword] = useState(false); 
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [apiError, setApiError] = useState(""); 
-    const [successMessage, setSuccessMessage] = useState("");
+    const [status,resetstatus] = useState("");
 
-    const navigate = useNavigate(); 
+
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         
         let hasError = false;
-        if (!email.includes("@")) {
-            setEmailError("Invalid email address");
-            hasError = true;
-        } else {
-            setEmailError("");
-        }
 
         if (password.length < 6) {
             setPasswordError("Password must be at least 6 characters");
@@ -48,13 +47,11 @@ const SignUpPage = () => {
 
         if (!hasError) {
             try {
-                const result = await registerUser(email, password);
-                setSuccessMessage("Registration successful. Please check your email to verify your account.");
-                setApiError("");
-                
+                const result = await updatepassword(password);
+                resetstatus("Password update successful");
+              
             } catch (error) {
-                setApiError(`${error}`);
-                setSuccessMessage("");
+                resetstatus(`${error}`);
             }
         }
     };
@@ -67,7 +64,7 @@ const SignUpPage = () => {
                 flexDirection: 'column', 
                 alignItems: 'center', 
                 justifyContent: 'center', 
-                minHeight: '90vh',
+                minHeight: '100vh',
                 padding: 2 
             }}
         >
@@ -78,32 +75,19 @@ const SignUpPage = () => {
                     textAlign: "center",
                     mb: 2,
                 }} >
-                    <AccountCircleOutlinedIcon />
+                    <LockOutlinedIcon />
                 </Avatar>
 
                 <Typography component="h1" variant="h5" sx={{ textAlign: "center" }}>
-                    Sign Up
+                    Reset Password
                 </Typography>
 
                 <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 2 }}>
-                    <TextField 
-                        placeholder="Enter email" 
-                        fullWidth 
-                        required 
-                        autoFocus 
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        error={!!emailError}
-                        helperText={emailError}
-                        sx={{ mb: 2 }}
-                    />
-
-                    <TextField 
+                <TextField 
                         placeholder="Enter password" 
                         fullWidth 
                         required 
-                        type={showPassword ? "text" : "password"}
+                        type={showPassword ? "text" : "password"} 
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         error={!!passwordError}
@@ -112,17 +96,16 @@ const SignUpPage = () => {
                         InputProps={{
                             endAdornment: (
                                 <IconButton
-                                    onClick={() => setShowPassword(!showPassword)}
+                                    onClick={() => setShowPassword(!showPassword)} 
                                     edge="end"
                                     aria-label="toggle password visibility"
                                 >
-                                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                                    {showPassword ? <VisibilityOff /> : <Visibility />} 
                                 </IconButton>
                             ),
                         }}
                     />
-
-                    <TextField 
+                                        <TextField 
                         placeholder="Confirm password" 
                         fullWidth 
                         required 
@@ -156,30 +139,23 @@ const SignUpPage = () => {
                             '&:hover': { bgcolor: "#ffca28" }
                         }}
                     >
-                        Sign Up
+                        Submit
                     </Button>
-
-                    {apiError && (
-                        <Typography color="error" sx={{ mt: 2 }}>
-                            {apiError}
-                        </Typography>
-                    )}
-                    
-                    {successMessage && (
-                        <Typography color="success.main" sx={{ mt: 2 }}>
-                            {successMessage}
+                    {status && (
+                        <Typography color="black" sx={{ mt: 2 }}>
+                            {status}
                         </Typography>
                     )}
                 </Box>
 
-                <Grid2 container justifyContent='flex-end' sx={{ mt: 2 }}>
+                <Grid2 container justifyContent='center' sx={{ mt: 2 }}>
                     <Grid2>
                         <Link 
                             component={RouterLink} 
                             to="/login"
                             sx={{ color: '#212121', textDecoration: 'none', '&:hover': { color: '#ffca28' } }}
                         >
-                            Already have an account? Sign In
+                            Back to Login
                         </Link>
                     </Grid2>
                 </Grid2>
@@ -188,4 +164,4 @@ const SignUpPage = () => {
     );
 }
 
-export default SignUpPage;
+export default ResetPasswordPage;
