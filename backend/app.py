@@ -22,6 +22,7 @@ security = HTTPBearer()
 url= os.environ.get("SUPABASE_URL")
 key= os.environ.get("SUPABASE_KEY")
 et_key=os.environ.get("ETERNITAS_KEY")
+PORT=os.environ.get("PORT")
 supabase= create_client(url, key)
 
 app.add_middleware(
@@ -183,4 +184,4 @@ async def getprofile(request:Request):
           
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=PORT)
