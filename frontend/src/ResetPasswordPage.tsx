@@ -3,7 +3,7 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { Link as RouterLink } from "react-router-dom"; 
-import { useState } from "react"; 
+import { useState,useEffect } from "react"; 
 import { updatepassword } from "./api";
 
 
@@ -12,8 +12,6 @@ const urlParams = new URLSearchParams(url.split('#')[1]);
 const accessToken = urlParams.get('access_token');
 const refreshToken = urlParams.get('refresh_token');
 
-document.cookie = `access_token=${accessToken}; SameSite=Strict;`;
-document.cookie = `refresh_token=${refreshToken}; SameSite=Strict;`;
 
 const ResetPasswordPage = () => {
     const [password, setPassword] = useState("");
@@ -23,6 +21,8 @@ const ResetPasswordPage = () => {
     const [confirmPasswordError, setConfirmPasswordError] = useState("");
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [status,resetstatus] = useState("");
+
+   
 
 
 
@@ -47,6 +47,9 @@ const ResetPasswordPage = () => {
 
         if (!hasError) {
             try {
+
+                document.cookie = `access_token_Eternitas=${accessToken}; SameSite=Strict;`;
+                document.cookie = `refresh_token_Eternitas=${refreshToken}; SameSite=Strict;`;
                 const result = await updatepassword(password);
                 resetstatus("Password update successful");
               

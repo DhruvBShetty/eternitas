@@ -1,10 +1,26 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Container, Typography, Box, Button, TextField, Paper, MenuItem } from "@mui/material";
 import Logo from './logo.png';
+import { profilesubmit,getprofiledata,profiledata } from "./api";
+import Swal from 'sweetalert2'
+import Mymenu from "./Components/Menu";
+
+interface PersonData {
+    First_name: string;       // First name of the person
+    Middle_name: string;     // Middle name (optional)
+    Last_name: string;        // Last name of the person
+    Date_of_birth: string;    // Date of birth in string format (or use Date if it's a Date object)
+    Date_of_death: string;   // Date of death (optional)
+    Relationship: string;     // Relationship (e.g., friend, family, etc.)
+    Description: string;     // Additional description (optional)
+}
+
 
 const ProfilePageSetup = () => {
-    const [profileType, setProfileType] = useState<string | null>(null);
+    const [profileType, setProfileType] = useState<string | null>("Person");
+    const [profilesetup,setProfilesetup] = useState(false);
+    const [displayform,setForm]=useState(false)
     const [firstName, setFirstName] = useState("");
     const [middleName, setMiddleName] = useState("");
     const [lastName, setLastName] = useState("");
@@ -19,7 +35,32 @@ const ProfilePageSetup = () => {
         setProfileType(type);
     };
 
-    const handleSubmit = () => {
+    useEffect(()=>{
+        try{
+         getprofiledata().then(res=>{let pdata:PersonData=res.data[0];
+            if(pdata!==undefined){
+            setFirstName(pdata.First_name);
+            setMiddleName(pdata.Middle_name);
+            setLastName(pdata.Last_name);
+            setDob(pdata.Date_of_birth);
+            setDeathDate(pdata.Date_of_death);
+            setRelationship(pdata.Relationship);
+            setDescription(pdata.Description)
+            setProfilesetup(true);
+            }
+        }
+         )
+        }
+        catch(error:unknown){
+            Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: `${error}`
+              });
+        }
+    },[])
+
+    const handleSubmit = async() => {
         const profileData = {
             profileType,
             firstName,
@@ -30,13 +71,27 @@ const ProfilePageSetup = () => {
             relationship,
             description,
         };
-
-        // Navigate to ProfilePage and pass profileData as state
-        navigate('/profile', { state: profileData });
-    };
+       // Navigate to ProfilePage and pass profileData as state
+       try{
+        await profilesubmit(profileData).then(()=>{
+            navigate('/profile')
+        }
+        )
+       }
+        catch(error){
+            Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: `${error}`
+              });
+        }
+}
 
     return (
+        <div>
+        <Mymenu/>
         <Container maxWidth="sm" sx={{ mt: 4 }}>
+            
             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
                 <img src={Logo} alt="Logo" style={{ width: '150px' }} />
             </Box>
@@ -52,20 +107,21 @@ const ProfilePageSetup = () => {
                 <Button
                     variant="contained"
                     color={profileType === "Human" ? "primary" : "inherit"}
-                    onClick={() => handleProfileType("Human")}
+                    onClick={() => setForm(true)}
                 >
-                    Human
+                {profilesetup ?<p>Edit {firstName} {lastName}</p>:<p>Set up profile</p>}
+
                 </Button>
-                <Button
+                {/* <Button
                     variant="contained"
                     color={profileType === "Animal" ? "primary" : "inherit"}
                     onClick={() => handleProfileType("Animal")}
                 >
                     Animal
-                </Button>
+                </Button> */}
             </Box>
 
-            {profileType && (
+            {displayform && (
                 <Paper elevation={3} sx={{ padding: 3 }}>
                     <Typography variant="h6" sx={{ mb: 2 }}>
                         {profileType} Information
@@ -132,8 +188,8 @@ const ProfilePageSetup = () => {
                         sx={{ mb: 2 }}
                     >
                         <MenuItem value="Parent">Parent</MenuItem>
-                        <MenuItem value="Sibling">Brother</MenuItem>
-                        <MenuItem value="Sibling">Sister</MenuItem>
+                        <MenuItem value="Brother">Brother</MenuItem>
+                        <MenuItem value="Sister">Sister</MenuItem>
                         <MenuItem value="Friend">Friend</MenuItem>
                         <MenuItem value="Other">Other</MenuItem>
                     </TextField>
@@ -160,7 +216,9 @@ const ProfilePageSetup = () => {
                 </Paper>
             )}
         </Container>
+        </div>
     );
 };
+
 
 export default ProfilePageSetup;

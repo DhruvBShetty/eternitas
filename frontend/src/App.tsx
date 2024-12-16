@@ -6,24 +6,29 @@ import ForgotPasswordPage from './ForgotPasswordPage';
 import ProfilePage from './ProfilePage';
 import SplashScreen from './SplashScreen';  
 import ProfilePageSetup from './ProfilePageSetup'; 
-import EmailVerificationPage from './EmailVerificationPage'; 
 import ResetPasswordPage from './ResetPasswordPage';
+import { AuthProvider } from './Auth/Auth';
+import { PrivateRoutes } from './Auth/PrivateRoutes';
 
 const App = () => {
   return (
+    <AuthProvider>
     <Router>
       <Routes>
         <Route path="/" element={<SplashScreen />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<SignUpPage />} />
+        <Route element={<PrivateRoutes/>}>
+        <Route path="/profilepagesetup" element={<ProfilePageSetup />} /> 
         <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/profilepage" element={<ProfilePage />} /> 
+        </Route>
+        <Route path="/profile/:id" element={<ProfilePage />} />
         <Route path="/forgot" element={<ForgotPasswordPage />} />
-        <Route path="/profilepagesetup" element={<ProfilePageSetup />} />
         {/* <Route path="/verify-email/:token" element={<EmailVerificationPage />} />  */}
         <Route path="/Reset-password" element={<ResetPasswordPage/>}/>
       </Routes>
     </Router>
+    </AuthProvider>
   );
 };
 

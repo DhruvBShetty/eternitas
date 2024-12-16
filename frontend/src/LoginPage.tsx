@@ -5,7 +5,10 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { Link as RouterLink, useNavigate } from "react-router-dom"; 
 import { loginUser } from './api';  
-import Logo from './logo.png';  
+import Logo from './logo.png'; 
+import Mymenu from "./Components/Menu";
+// import Hamburgermenu from "./Components/HamburgerMenu";
+ 
 
 
 const LoginPage = () => {
@@ -40,11 +43,11 @@ const LoginPage = () => {
     
         if (!hasError) {
             try {
-                await loginUser(email, password).then(res=>{
-                    setUser(res);
+                loginUser(email, password).then((res)=>{
+                    navigate('/profilepagesetup');
                 });
                 console.log("Login successful:", user);
-                navigate('/profilepage')
+                
             } catch (error) {
                 setApiError(`${error}`);
             }
@@ -54,6 +57,8 @@ const LoginPage = () => {
     
 
     return (
+       
+      <div className="Sidebar">
         <Container 
             maxWidth="xs"
             sx={{ 
@@ -62,9 +67,10 @@ const LoginPage = () => {
                 alignItems: 'center', 
                 justifyContent: 'center', 
                 minHeight: '60vh',
-                padding: 2 
+                padding:2
             }}
         >
+       
             <Box 
                 sx={{ 
                     mb: { xs: 8, sm: 12, md: 16 }, 
@@ -180,6 +186,7 @@ const LoginPage = () => {
                 </Grid2>
             </Paper>
         </Container>
+        </div>
     );
 }
 

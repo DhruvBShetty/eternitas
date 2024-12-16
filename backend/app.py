@@ -21,17 +21,17 @@ app = FastAPI()
 security = HTTPBearer()
 url= os.environ.get("SUPABASE_URL")
 key= os.environ.get("SUPABASE_KEY")
+et_key=os.environ.get("ETERNITAS_KEY")
 supabase= create_client(url, key)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "X-Requested-With", "X-API-KEY"],
+    allow_methods=["*"],
+    allow_headers=["*"],
     allow_credentials=True
 )
-
-users = {}  
+ 
 SECRET_KEY = "your_secret_key" 
 
 class User(BaseModel):
@@ -93,13 +93,21 @@ async def register(user: User):
 
 
 @app.post("/api/login")
-async def login(user:User):
+async def login(user:User,request:Response):
     try:
-        session=supabase.auth.sign_in_with_password({"email":user.email,"password":user.password})
+        user_d=supabase.auth.sign_in_with_password({"email":user.email,"password":user.password})
     except Exception as e:
         raise HTTPException(status_code=e.status, detail=e.message)
     
-    return session
+    try:
+        myuser = supabase.table("Account").select("id").eq("email",user.email).execute()
+    except APIError:
+        raise HTTPException(status_code=400, detail=e.details)
+    
+    payload={"email":user.email,"id":myuser.data[0].get("id"),"exp": datetime.now() + timedelta(hours=1)}
+    token=jwt.encode(payload,et_key,algorithm="HS256")
+    request.set_cookie(key="Eternitas_session",value=token,httponly=True,samesite="Strict")
+    
 
 @app.post("/api/forgotpassword")
 async def forgotpassword(email:Email):
@@ -107,12 +115,24 @@ async def forgotpassword(email:Email):
        supabase.auth.reset_password_for_email(email.email, {"redirect_to": "http://localhost:3000/Reset-password",})
     except Exception as e:
         raise HTTPException(status_code=e.status, detail=e.message)
+    
+@app.post("/api/getsession")
+async def getsession(request:Request):
+    token=request.cookies.get("Eternitas_session")
+    try:
+        payload=jwt.decode(token,et_key,algorithms=["HS256"])
+        return {"isAuthenticated":True}
+    except Exception:
+        return {"isAuthenticated":False}
 
 @app.post("/api/updatepassword")
 async def updatepassword(request:Request):
 
-    access_token=request.cookies.get('access_token')
-    refresh_token=request.cookies.get('refresh_token')
+    access_token=request.cookies.get("access_token_Eternitas")
+    refresh_token=request.cookies.get("refresh_token_Eternitas")
+
+    request.delete_cookie("access_token_Eternitas")
+    request.delete_cookie("refresh_token_Eternitas")
 
     session = supabase.auth.set_session(access_token, refresh_token)
     data = await request.json()
@@ -131,8 +151,39 @@ async def updatepassword(request:Request):
     except Exception as e:
         raise HTTPException(status_code=e.status, detail=e.message)
 
-    
+@app.post("/api/createprofile")
+async def createprofile(request:Request):
+          token=request.cookies.get("Eternitas_session")
+          try:
+            payload=jwt.decode(token,et_key,algorithms=["HS256"])
+          except Exception as e:
+            raise HTTPException(status_code=401,detail=str(e))
+            
+          data = await request.json()
+          
+          try:
+            supabase.table("Memorial_info").upsert({"id":payload.get("id"),"First_name":data.get("firstName"),
+            "Middle_name":data.get("middleName"),"Last_name":data.get("lastName"),"Date_of_birth":data.get("dob"),
+            "Date_of_death":data.get("deathDate"),"Relationship":data.get("relationship"),"Description":data.get("description")}).execute()
+          except APIError as e:
+            raise HTTPException(status_code=400, detail=e.details)
+              
+@app.get("/api/editprofile")
+async def getprofile(request:Request):
+        token=request.cookies.get("Eternitas_session")
+        try:
+            payload=jwt.decode(token,et_key,algorithms=["HS256"])
+        except Exception as e:
+            raise HTTPException(status_code=401,detail=str(e))
+            
+        try:
+            memo_info=supabase.table("Memorial_info").select("*").eq("id",payload.get("id")).execute()
+        except APIError as e:
+            raise HTTPException(status_code=400, detail=e.details)
+        
+        return memo_info
 
+          
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)

@@ -36,3 +36,18 @@
     transform: rotate(360deg);
   }
 }
+
+.Sidebar {
+  width:fit-content;
+  height: auto;
+  position: relative;
+  text-align: center;
+  min-width: 100px;
+  float:left;
+}
+
+.bm-menu {
+  background: #474437;
+  padding: 2.5em 1.5em 0;
+  font-size: 1.15em;
+}

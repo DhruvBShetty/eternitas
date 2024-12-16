@@ -1,60 +1,38 @@
 import axios, { AxiosError } from "axios";
 import { error } from "console";
 
+export interface profiledata {
+    profileType:string|null,
+    firstName:string,
+    middleName:string,
+    lastName:string,
+    dob:string, // Date of Birth
+    deathDate:string, // Date of Death
+    relationship:string,
+    description:string
+}
+
 export const loginUser = async (email: string, password: string) => {
     try {
-        const response = await fetch('http://localhost:8000/api/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email, password }),
-        });
-        
-        
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(`${data.detail}`);
-        }
-
-        return data;
+        const response = await axios.post(
+            "http://localhost:8000/api/login",
+            { email, password }, // Request body
+            {
+                withCredentials: true, // Include cookies in the request
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }
+        )
     } catch (error) {
-        if (error instanceof Error) {
-            throw new Error(error.message);
+        if (axios.isAxiosError(error) && error.response) {
+            // Extract error message from the response
+            throw new Error(`${error.response.data.detail}`);
         } else {
             throw new Error("An unknown error occurred");
         }
     }
 };
-
-// export const registerUser = async (email: string, password: string) => {
-//     try {
-//         const response = await fetch('http://localhost:8000/api/register', {
-//             method: 'POST',
-//             headers: {
-//                 'Content-Type': 'application/json',
-//             },
-//             body: JSON.stringify({ email, password }),
-//         });
-
-//         if (!response.ok) {
-//             throw new Error(`Failed to register. Status: ${response.status}`);
-//         }
-
-//         const data = await response.json();
-//         return data;
-//     } catch (error) {
-//         if (error instanceof Error) {
-//             if (error.message === 'Failed to fetch') {
-//                 throw new Error('Network error. Please check your connection.');
-//             }
-//             throw new Error(error.message);
-//         } else {
-//             throw new Error('An unknown error occurred');
-//         }
-//     }
-// };
 
 export const registerUser = async (email: string, password: string) => {
     try {
@@ -112,3 +90,41 @@ export const updatepassword = async (password:String)=>{
         }
     }
 };
+
+export const profilesubmit = async (data:profiledata)=>{
+       try{
+        const response = await axios.post("http://localhost:8000/api/createprofile",data,{withCredentials:true});
+       }
+       catch(error:unknown){
+        if (axios.isAxiosError(error)) {
+            if (error.response && error.response.data) {
+                throw new Error(`${error.response.data.detail}` || "An error occurred");
+            } else if (error.message) {
+                throw new Error(error.message);
+            }
+        } else {
+            // For any non-Axios errors
+            throw new Error("An unknown error occurred");
+        }
+    }
+
+}
+
+export const getprofiledata = async()=>{
+    try{
+        const response = await axios.get("http://localhost:8000/api/editprofile",{withCredentials:true}).then(res=>{return res.data})
+        return response
+    }
+    catch(error:unknown){
+        if (axios.isAxiosError(error)) {
+            if (error.response && error.response.data) {
+                throw new Error(`${error.response.data.detail}` || "An error occurred");
+            } else if (error.message) {
+                throw new Error(error.message);
+            }
+        } else {
+            // For any non-Axios errors
+            throw new Error("An unknown error occurred");
+        }
+    }
+}
