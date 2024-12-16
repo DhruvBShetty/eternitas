@@ -1,5 +1,6 @@
 import axios, { AxiosError } from "axios";
 import { error } from "console";
+import { env } from "process";
 
 export interface profiledata {
     profileType:string|null,
@@ -15,7 +16,7 @@ export interface profiledata {
 export const loginUser = async (email: string, password: string) => {
     try {
         const response = await axios.post(
-            `http://localhost:8000/api/login`,
+            `${process.env.REACT_APP_SERVER_ENV}/api/login`,
             { email, password }, // Request body
             {
                 withCredentials: true, // Include cookies in the request
@@ -37,7 +38,7 @@ export const loginUser = async (email: string, password: string) => {
 export const registerUser = async (email: string, password: string) => {
     try {
         // Sending the POST request using axios
-        const response = await axios.post(`http://localhost:8000/api/register`, {
+        const response = await axios.post(`${process.env.REACT_APP_SERVER_ENV}/api/register`, {
             email,
             password,
         });
@@ -58,7 +59,7 @@ export const registerUser = async (email: string, password: string) => {
 
 export const resetpassword = async (email:string)=>{
 try{
-    await axios.post(`http://localhost:8000/api/forgotpassword`,{"email":email});
+    await axios.post(`${process.env.REACT_APP_SERVER_ENV}/api/forgotpassword`,{"email":email});
 }
 catch (error) {
     if (error instanceof Error) {
@@ -72,7 +73,7 @@ catch (error) {
 
 export const updatepassword = async (password:String)=>{
     try{
-        const response =await axios.post(`http://localhost:8000/api/updatepassword`,{"password":password},{withCredentials:true})
+        const response =await axios.post(`${process.env.REACT_APP_SERVER_ENV}/api/updatepassword`,{"password":password},{withCredentials:true})
         const data=response.data
         console.log(data);
         return data;
@@ -93,7 +94,7 @@ export const updatepassword = async (password:String)=>{
 
 export const profilesubmit = async (data:profiledata)=>{
        try{
-        const response = await axios.post(`http://localhost:8000/api/createprofile`,data,{withCredentials:true});
+        const response = await axios.post(`${process.env.REACT_APP_SERVER_ENV}/api/createprofile`,data,{withCredentials:true});
        }
        catch(error:unknown){
         if (axios.isAxiosError(error)) {
@@ -112,7 +113,7 @@ export const profilesubmit = async (data:profiledata)=>{
 
 export const getprofiledata = async()=>{
     try{
-        const response = await axios.get(`http://localhost:8000/api/editprofile`,{withCredentials:true}).then(res=>{return res.data})
+        const response = await axios.get(`${process.env.REACT_APP_SERVER_ENV}/api/editprofile`,{withCredentials:true}).then(res=>{return res.data})
         return response
     }
     catch(error:unknown){

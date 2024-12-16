@@ -43,10 +43,8 @@ const LoginPage = () => {
     
         if (!hasError) {
             try {
-                loginUser(email, password).then((res)=>{
-                    navigate('/profilepagesetup');
-                });
-                console.log("Login successful:", user);
+                await loginUser(email, password);
+                navigate("/profilepagesetup");
                 
             } catch (error) {
                 setApiError(`${error}`);

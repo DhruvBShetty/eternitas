@@ -131,9 +131,6 @@ async def updatepassword(request:Request):
     access_token=request.cookies.get("access_token_Eternitas")
     refresh_token=request.cookies.get("refresh_token_Eternitas")
 
-    request.delete_cookie("access_token_Eternitas")
-    request.delete_cookie("refresh_token_Eternitas")
-
     session = supabase.auth.set_session(access_token, refresh_token)
     data = await request.json()
     password=data.get('password')

@@ -22,7 +22,7 @@ export const AuthProvider: React.FC<AuthProviderProps>=({ children }) => {
   useEffect(() => {
     const fetchToken = async () => {
       try {
-        const response = await axios.post(`http://localhost:8000/api/getsession`,{},{withCredentials:true});
+        const response = await axios.post(`${process.env.REACT_APP_SERVER_ENV}/api/getsession`,{},{withCredentials:true});
         setIsAuthenticated(response.data); // Set fetched token
       } catch (error) {
         console.error('Error fetching session:', error);
