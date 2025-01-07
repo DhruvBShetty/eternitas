@@ -7,6 +7,7 @@ import Swal from 'sweetalert2'
 import Mymenu from "./Components/Menu";
 
 interface PersonData {
+    id:Number;
     First_name: string;       // First name of the person
     Middle_name: string;     // Middle name (optional)
     Last_name: string;        // Last name of the person
@@ -19,6 +20,7 @@ interface PersonData {
 
 const ProfilePageSetup = () => {
     const [profileType, setProfileType] = useState<string | null>("Person");
+    const [id, setid]=useState<Number|undefined>(undefined);
     const [profilesetup,setProfilesetup] = useState(false);
     const [displayform,setForm]=useState(false)
     const [firstName, setFirstName] = useState("");
@@ -36,9 +38,10 @@ const ProfilePageSetup = () => {
     };
 
     useEffect(()=>{
-        try{
-         getprofiledata().then(res=>{let pdata:PersonData=res.data[0];
+      
+         getprofiledata().then(res=>{let pdata:PersonData=res?.data?res.data[0]:undefined;
             if(pdata!==undefined){
+            setid(pdata.id);
             setFirstName(pdata.First_name);
             setMiddleName(pdata.Middle_name);
             setLastName(pdata.Last_name);
@@ -48,16 +51,9 @@ const ProfilePageSetup = () => {
             setDescription(pdata.Description)
             setProfilesetup(true);
             }
-        }
-         )
-        }
-        catch(error:unknown){
-            Swal.fire({
-                icon: "error",
-                title: "Oops...",
-                text: `${error}`
-              });
-        }
+        })
+        
+  
     },[])
 
     const handleSubmit = async() => {
@@ -89,7 +85,7 @@ const ProfilePageSetup = () => {
 
     return (
         <div>
-        <Mymenu/>
+        {id && <Mymenu uid={id}/>}
         <Container maxWidth="sm" sx={{ mt: 4 }}>
             
             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>

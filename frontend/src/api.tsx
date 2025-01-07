@@ -1,6 +1,8 @@
 import axios, { AxiosError } from "axios";
 import { error } from "console";
 import { env } from "process";
+import Swal from "sweetalert2";
+import { forEachChild } from "typescript";
 
 export interface profiledata {
     profileType:string|null,
@@ -116,7 +118,36 @@ export const getprofiledata = async()=>{
         const response = await axios.get(`${process.env.REACT_APP_SERVER_ENV}/api/editprofile`,{withCredentials:true}).then(res=>{return res.data})
         return response
     }
-    catch(error:unknown){
+    catch(error:any){
+        if (axios.isAxiosError(error)) {
+            if (error.response && error.response.data) {
+              Swal.fire({
+                              icon: "error",
+                              title: "Oops...",
+                              text: `${error.response.data.detail}`
+                            });
+            } else if (error?.message) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Oops...",
+                    text: `${error.message}`
+                  });
+            }
+        } else {
+            // For any non-Axios errors
+            throw new Error("An unknown error occurred");
+        }
+    }
+}
+
+export const profileupload = async(picture:File)=>{
+     try {
+           const formData=new FormData()
+           formData.append("file",picture)
+           await axios.post(`${process.env.REACT_APP_SERVER_ENV}/api/uploadpic`,formData,{
+            headers:{"Content-Type": "multipart/form-data",},withCredentials:true})
+     }
+     catch(error:unknown){
         if (axios.isAxiosError(error)) {
             if (error.response && error.response.data) {
                 throw new Error(`${error.response.data.detail}` || "An error occurred");
@@ -128,4 +159,119 @@ export const getprofiledata = async()=>{
             throw new Error("An unknown error occurred");
         }
     }
+     }
+
+export const mediaupload = async(media:File[])=>{
+
+    try {
+        const formData=new FormData()
+
+      media.forEach((file)=>{
+        formData.append('files', file); 
+      })
+        
+        await axios.post(`${process.env.REACT_APP_SERVER_ENV}/api/uploadmedia`,formData,{
+         headers:{"Content-Type": "multipart/form-data",},withCredentials:true})
+  }
+  catch(error:unknown){
+     if (axios.isAxiosError(error)) {
+         if (error.response && error.response.data) {
+             throw new Error(`${error.response.data.detail}` || "An error occurred");
+         } else if (error.message) {
+             throw new Error(error.message);
+         }
+     } else {
+         // For any non-Axios errors
+         throw new Error("An unknown error occurred");
+     }
+ }
+
+
 }
+
+export const getmedia = async()=>{
+
+try{
+    const response =  await axios.get(`${process.env.REACT_APP_SERVER_ENV}/api/getmedia`,{withCredentials:true}).then(res=>{return res.data})
+    return response
+}catch(error:any){
+    if (axios.isAxiosError(error)) {
+        if (error.response && error.response.data) {
+          Swal.fire({
+                          icon: "error",
+                          title: "Oops...",
+                          text: `${error.response.data.detail}`
+                        });
+        } else if (error?.message) {
+            Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: `${error.message}`
+              });
+        }
+    } else {
+        // For any non-Axios errors
+        throw new Error("An unknown error occurred");
+    }
+
+
+}
+}
+
+
+export const getpublicmedia = async(id:number)=>{
+
+    try{
+        const response =  await axios.get(`${process.env.REACT_APP_SERVER_ENV}/api/profilemedia/${id}`).then(res=>{return res.data})
+        return response
+    }catch(error:any){
+        if (axios.isAxiosError(error)) {
+            if (error.response && error.response.data) {
+              Swal.fire({
+                              icon: "error",
+                              title: "Oops...",
+                              text: `${error.response.data.detail}`
+                            });
+            } else if (error?.message) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Oops...",
+                    text: `${error.message}`
+                  });
+            }
+        } else {
+            // For any non-Axios errors
+            throw new Error("An unknown error occurred");
+        }
+    
+    
+    }
+    }
+
+export const getpublicprofiledata = async(id:number)=>{
+        try{
+            const response = await axios.get(`${process.env.REACT_APP_SERVER_ENV}/api/profiledata/${id}`).then(res=>{return res.data})
+            return response
+        }
+        catch(error:any){
+            if (axios.isAxiosError(error)) {
+                if (error.response && error.response.data) {
+                  Swal.fire({
+                                  icon: "error",
+                                  title: "Oops...",
+                                  text: `${error.response.data.detail}`
+                                });
+                } else if (error?.message) {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Oops...",
+                        text: `${error.message}`
+                      });
+                }
+            } else {
+                // For any non-Axios errors
+                throw new Error("An unknown error occurred");
+            }
+        }
+    }
+    

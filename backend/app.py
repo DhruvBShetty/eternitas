@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException, Depends,Request,Response
+from fastapi import FastAPI, HTTPException, Depends,Request,Response,File,UploadFile
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import smtplib 
@@ -15,6 +16,12 @@ import bcrypt
 from fastapi.security import HTTPBearer
 import json
 from postgrest.exceptions import APIError
+import boto3
+from botocore.exceptions import NoCredentialsError
+import uuid
+import httpx
+from typing import List
+
 load_dotenv()
 
 app = FastAPI()
@@ -22,18 +29,22 @@ security = HTTPBearer()
 url= os.environ.get("SUPABASE_URL")
 key= os.environ.get("SUPABASE_KEY")
 et_key=os.environ.get("ETERNITAS_KEY")
-PORT=os.environ.get("PORT")
+aws_access=os.environ.get("AWS_ACCESS_KEY")
+aws_secret=os.environ.get("AWS_SECRET_KEY")
+aws_bucket=os.environ.get("AWS_S3_BUCKET_NAME")
+aws_region=os.environ.get("AWS_REGION")
+
+
 supabase= create_client(url, key)
+s3_client=boto3.client(service_name='s3',region_name=aws_region,aws_access_key_id=aws_access,aws_secret_access_key=aws_secret)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3000"],
     allow_methods=["*"],
     allow_headers=["*"],
     allow_credentials=True
 )
- 
-SECRET_KEY = "your_secret_key" 
 
 class User(BaseModel):
     email: str
@@ -50,32 +61,6 @@ class Password(BaseModel):
 async def home():
     return {"message": "Welcome to FastAPI"}
 
-def generate_verification_token(email: str):
-    expiration = datetime.utcnow() + timedelta(hours=1)  
-    token = jwt.encode({"email": email, "exp": expiration}, SECRET_KEY, algorithm="HS256")
-    return token
-
-
-def send_verification_email(email: str, token: str):
-    sender_email = "xxoliverytxx@gmail.com" 
-    receiver_email = email
-    subject = "Verify your email"
-    verification_link = f"http://localhost:8000/api/verify_email/{token}" 
-
-    msg = MIMEMultipart()
-    msg['From'] = sender_email
-    msg['To'] = receiver_email
-    msg['Subject'] = subject
-    body = f"Click the link to verify your email: {verification_link}"
-    msg.attach(MIMEText(body, 'plain'))
-
-    try:
-        server = smtplib.SMTP_SSL('smtp.gmail.com', 465) 
-        server.login(sender_email, "wzhu kvqk nptu mcuv")  
-        server.sendmail(sender_email, receiver_email, msg.as_string())
-        server.quit()
-    except Exception as e:
-        print(f"Failed to send email: {str(e)}")
 
 @app.post("/api/register")
 async def register(user: User):
@@ -105,6 +90,8 @@ async def login(user:User,request:Response):
     except APIError:
         raise HTTPException(status_code=400, detail=e.details)
     
+
+    
     payload={"email":user.email,"id":myuser.data[0].get("id"),"exp": datetime.now() + timedelta(hours=1)}
     token=jwt.encode(payload,et_key,algorithm="HS256")
     request.set_cookie(key="Eternitas_session",value=token,httponly=True,samesite="Strict")
@@ -120,6 +107,7 @@ async def forgotpassword(email:Email):
 @app.post("/api/getsession")
 async def getsession(request:Request):
     token=request.cookies.get("Eternitas_session")
+    
     try:
         payload=jwt.decode(token,et_key,algorithms=["HS256"])
         return {"isAuthenticated":True}
@@ -165,9 +153,14 @@ async def createprofile(request:Request):
             "Date_of_death":data.get("deathDate"),"Relationship":data.get("relationship"),"Description":data.get("description")}).execute()
           except APIError as e:
             raise HTTPException(status_code=400, detail=e.details)
+          
+@app.post("/api/logout")
+async def logout(request:Response):
+    request.delete_cookie("Eternitas_session")
+    
               
 @app.get("/api/editprofile")
-async def getprofile(request:Request):
+async def editprofile(request:Request):
         token=request.cookies.get("Eternitas_session")
         try:
             payload=jwt.decode(token,et_key,algorithms=["HS256"])
@@ -176,12 +169,103 @@ async def getprofile(request:Request):
             
         try:
             memo_info=supabase.table("Memorial_info").select("*").eq("id",payload.get("id")).execute()
+            return memo_info
+            
         except APIError as e:
+            print(e)
             raise HTTPException(status_code=400, detail=e.details)
         
-        return memo_info
+        except httpx.ConnectError:
+            raise HTTPException(status_code=500, detail="No internet connection")
 
-          
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=PORT)
+        
+@app.post("/api/uploadpic")
+async def uploadpic(request:Request,file: UploadFile = File(...)):
+    token=request.cookies.get("Eternitas_session")
+    try:
+        payload=jwt.decode(token,et_key,algorithms=["HS256"])
+    except Exception as e:
+        raise HTTPException(status_code=401,detail=str(e))
+
+    new_fname=str(payload.get("id"))+"/"+"profilepic"
+    try:
+        s3_client.upload_fileobj(file.file,aws_bucket,new_fname, ExtraArgs={
+                "ACL": "public-read",
+                "ContentType": file.content_type,  # Use content type provided by the client
+            })
+    except NoCredentialsError:
+        print("?")
+        return JSONResponse(content={"error": "AWS credentials not found"}, status_code=500)
+    except Exception as e:
+        print(e)
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+@app.post("/api/uploadmedia")
+async def uploadmedia(request:Request,files: List[UploadFile] = File(...)):
+    token=request.cookies.get("Eternitas_session")
+    try:
+        payload=jwt.decode(token,et_key,algorithms=["HS256"])
+    except Exception as e:
+        raise HTTPException(status_code=401,detail=str(e))    
+
+    for file in files:
+        file_name = str(payload.get("id"))+"/media/"+file.filename
+        try:
+            s3_client.upload_fileobj(file.file,aws_bucket,file_name, ExtraArgs={
+                    "ACL": "public-read",
+                    "ContentType": file.content_type,  # Use content type provided by the client
+                })
+        except NoCredentialsError:
+            print("?")
+            return JSONResponse(content={"error": "AWS credentials not found"}, status_code=500)
+        except Exception as e:
+            print(e)
+            return JSONResponse(content={"error": str(e)}, status_code=500)
+
+@app.get("/api/getmedia")
+async def getmedia(request:Request):
+    token=request.cookies.get("Eternitas_session")
+    try:
+        payload=jwt.decode(token,et_key,algorithms=["HS256"])
+    except Exception as e:
+        raise HTTPException(status_code=401,detail=str(e)) 
+
+    folder_prefix=str(payload.get("id"))+'/media/'
+
+    response = s3_client.list_objects_v2(Bucket=aws_bucket, Prefix=folder_prefix)
+
+    # Check if there are any objects in the folder
+    if 'Contents' in response:
+        # Extract the file names (keys)
+        file_names = [obj['Key'] for obj in response['Contents']]
+        return file_names
+    else:   
+        return []        
+
+@app.get("/api/profiledata/{id}")
+async def profiledata(id:int):
+    try:
+        memo_info=supabase.table("Memorial_info").select("*").eq("id",id).execute()
+        return memo_info
+        
+    except APIError as e:
+        raise HTTPException(status_code=400, detail=e.details)
+
+@app.get("/api/profilemedia/{id}")
+async def profilemedia(id:int):
+    folder_prefix=str(id)+'/media/'
+
+    response = s3_client.list_objects_v2(Bucket=aws_bucket, Prefix=folder_prefix)
+
+    # Check if there are any objects in the folder
+    if 'Contents' in response:
+        # Extract the file names (keys)
+        file_names = [obj['Key'] for obj in response['Contents']]
+        return file_names
+    else:   
+        return []        
+
+
+
+       
+     

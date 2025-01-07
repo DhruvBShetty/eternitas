@@ -36,7 +36,7 @@ interface Menuprops{
   uid?:Number;
 }
 
-const Mymenu:React.FC<Menuprops>=({uid})=>{
+const Publicmenu:React.FC<Menuprops>=({uid})=>{
 
   const pathname: string = window.location.pathname;
 
@@ -104,39 +104,9 @@ const Mymenu:React.FC<Menuprops>=({uid})=>{
        Home
         </div>  
         </a>
-        <br/><br/>
-        <a href={profile =='Profile' ? '/Profilepagesetup' :'/Profile'} style={{color:'white',textDecoration: 'none'}}>
-        <div style={{
-    display: 'flex',
-    alignItems: 'center',
-    flexWrap: 'wrap'}}>
-       <AccountCircleIcon/>
-       {profile =='Profile' ? 'Profilesetup' :'Profile'}
-        </div>
-        </a>
-        <br/><br/>
-
-       <a href={"/profile/"+uid} style={{color:'white',textDecoration: 'none'}}>
-        <div style={{
-    display: 'flex',
-    alignItems: 'center',
-    flexWrap: 'wrap'}}>
-      
-       <VisibilityIcon/>
-        Public view
-        </div>  
-        <br/><br/>
-        </a>
-       
-        
-        <Button color='primary' variant="outlined"
-  component="label"><a id="logout" className="menu-item" onClick={handlelogout}>Logout</a></Button>
-
-
-
-  
+     
       </Menu>
     );
   }
 
-export default Mymenu;
+export default Publicmenu;

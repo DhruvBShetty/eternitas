@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState,useContext } from "react";
 import { Avatar, Container, Paper, Typography, Box, TextField, FormControlLabel, Checkbox, Button, Grid2, Link, IconButton } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import Visibility from '@mui/icons-material/Visibility';
@@ -6,9 +6,9 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { Link as RouterLink, useNavigate } from "react-router-dom"; 
 import { loginUser } from './api';  
 import Logo from './logo.png'; 
-import Mymenu from "./Components/Menu";
-// import Hamburgermenu from "./Components/HamburgerMenu";
+import { AuthContext } from "./Auth/Auth";
  
+console.log()
 
 
 const LoginPage = () => {
@@ -20,8 +20,17 @@ const LoginPage = () => {
     const [apiError, setApiError] = useState(""); 
     const [showPassword, setShowPassword] = useState(false); 
     const [user,setUser]=useState(null);
+    const session = useContext(AuthContext);
 
-    console.log(user);
+
+
+    useEffect(()=>{
+        if(session?.isAuthenticated){
+            navigate("/profile");
+        }
+    },[session])
+
+    
     
     const handleSubmit = async(event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -43,12 +52,14 @@ const LoginPage = () => {
     
         if (!hasError) {
             try {
-                await loginUser(email, password);
-                navigate("/profilepagesetup");
-                
+                await loginUser(email, password).then(()=>{
+                    window.location.reload();
+                })
+               
             } catch (error) {
                 setApiError(`${error}`);
             }
+
             
         }
     };
@@ -56,7 +67,6 @@ const LoginPage = () => {
 
     return (
        
-      <div className="Sidebar">
         <Container 
             maxWidth="xs"
             sx={{ 
@@ -184,7 +194,6 @@ const LoginPage = () => {
                 </Grid2>
             </Paper>
         </Container>
-        </div>
     );
 }
 

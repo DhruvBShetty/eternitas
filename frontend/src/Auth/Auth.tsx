@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect,ReactNode } from 'react';
 import axios from 'axios';
+import '../App.css';
 
 
 interface AuthProviderProps {
@@ -36,7 +37,7 @@ export const AuthProvider: React.FC<AuthProviderProps>=({ children }) => {
 
   return (
     <AuthContext.Provider value={isAuthenticated}>
-      {loading ?<div className="loader">Loading...</div> : children}
+      {loading ? (<div className="loader">Loading...</div>) : children}
     </AuthContext.Provider>
   );
 };

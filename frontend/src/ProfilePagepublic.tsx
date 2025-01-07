@@ -1,11 +1,12 @@
 import React, { useState,useEffect, MouseEventHandler,useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { Container, Typography, Button, Box, CircularProgress, Snackbar, Alert, Avatar, Grid,Tabs,Tab,createTheme,ThemeProvider } from "@mui/material";
-import { getprofiledata,profileupload,mediaupload,getmedia } from "./api";
+import { getpublicprofiledata,profileupload,mediaupload,getpublicmedia } from "./api";
 import { amber,brown } from '@mui/material/colors';
 import Swal from 'sweetalert2'
 import Mymenu from "./Components/Menu";
 import Modal from '@mui/material/Modal';
+import Publicmenu from "./Components/Publicmenu";
 
 const theme = createTheme({
     palette: {
@@ -25,7 +26,6 @@ interface TabPanelProps {
   }
 
 interface PersonData {
-    id:Number;
     First_name: string;       // First name of the person
     Middle_name: string;     // Middle name (optional)
     Last_name: string;        // Last name of the person
@@ -60,7 +60,7 @@ interface PersonData {
   }
   
 
-const ProfilePage = () => {
+const ProfilePagepublic = () => {
 
     // const [profilePic, setProfilePic] = useState<File | null>(null);
     const [mediaFiles, setMediaFiles] = useState<File[]>([]);
@@ -75,6 +75,7 @@ const ProfilePage = () => {
     const [modalpic,setmodalpic]=useState("");
     const [pfpic,setPfpic]=useState("")
     const videoRef = useRef<HTMLVideoElement | null>(null);
+    const url = window.location.href;
 
     const style = {
       position: 'absolute',
@@ -90,20 +91,27 @@ const ProfilePage = () => {
       overflowY:'scroll'
     };
     
-    
-
     const imglink="https://eternitas-media.s3.eu-central-1.amazonaws.com/"
+    const personid=url.split("/")
+    const pid=parseInt(personid[personid.length-1])
+
     
     const handleChange =(event: React.SyntheticEvent, newValue: number) => {
       setValue(newValue);
     };
   
     useEffect(()=>{
-
-
+        if(isNaN(Number(pid))){
+            Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: "Invalid link"
+                });
+                return;
+            }
       async function fetchprofile(){
         try{
-            await getprofiledata().then(res=>{let pdata:PersonData=res?.data?res.data[0]:undefined;
+            await getpublicprofiledata(pid).then(res=>{let pdata:PersonData=res?.data?res.data[0]:undefined;
             if(pdata!==undefined){
             setprofiledata(pdata);
             setPfpic(imglink+pdata.Profile_pic);
@@ -119,84 +127,22 @@ const ProfilePage = () => {
                 });
         }
       }
+      async function getmlinks() {
+        try{
+            let data:Array<string>=await getpublicmedia(pid);
+            setMedialinks(data)
+          }catch(error:any){
+            Swal.fire({
+              icon: "error",
+              title: "Oops...",
+              text: "Media couldn't be fetched"
+              });
+          }
+        }
       fetchprofile();
+      getmlinks();
     },[])
 
-    useEffect(()=>{
-     async function getmlinks() {
-      try{
-          let data:Array<string>=await getmedia();
-          setMedialinks(data)
-        }catch(error:any){
-          Swal.fire({
-            icon: "error",
-            title: "Oops...",
-            text: "Media couldn't be fetched"
-            });
-        }
-      }
-     getmlinks()
-    },[])
-
-    const handleProfilePicChange =async(event: React.ChangeEvent<HTMLInputElement>) => {
-      
-        if (event?.target?.files && profileData) {
-            // setProfilePic(event.target.files[0]);
-            const file = event.target.files[0]; 
-            try{
-                 await profileupload(file)
-                 Swal.fire({
-                  icon:"success",
-                  title:"Successful",
-                  text:"Profile picture was updated"
-                 }
-                 ).then(()=>{
-                  window.location.reload();
-                 })
-            }catch(error:unknown){
-              Swal.fire({
-                icon:"error",
-                title:"Error",
-                text:"Profile picture update failed (will disappear on reload)"
-              })
-
-            }
-
-
-
-        }
-
-    };
-    
-
-    const handleMediaChange = async(event: React.ChangeEvent<HTMLInputElement>) => {
-        if (event?.target?.files && mediaFiles) {
-            const filesArray = Array.from(event.target.files);
-            setMediaFiles((prev) => [...prev, ...filesArray]);
-
-            try{
-              await mediaupload(filesArray)
-              Swal.fire({
-               icon:"success",
-               title:"Successful",
-               text:"Media files was updated"
-              }
-              ).then(()=>{
-               window.location.reload();
-              })
-         }catch(error:unknown){
-           Swal.fire({
-             icon:"error",
-             title:"Error",
-             text:"Media files update failed (will disappear on reload)"
-           })
-
-        }
-    };
-  }
-    const handleEditMedia = (index: number) => {
-        console.log("Edit media at index:", index);
-    };
 
 
     const calculateAge = (Date_of_birth: string, Date_of_death?: string) => {
@@ -226,20 +172,12 @@ const ProfilePage = () => {
 
     return (
       <div>
-        {profileData?.id && <Mymenu uid={profileData.id}/>}
-     
+        <Publicmenu/>
         <Container>
           
             <ThemeProvider theme={theme}>
             <Box sx={{ textAlign: 'center', mt: 3 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
-                    <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleProfilePicChange}
-                        style={{ display: 'none'}}
-                        id="profile-pic-upload"
-                    />
                     <label htmlFor="profile-pic-upload">
                         <Avatar
                             sx={{
@@ -320,21 +258,6 @@ const ProfilePage = () => {
        {`${profileData?.Description?profileData.Description:""}`}
       </CustomTabPanel>
       <CustomTabPanel value={value} index={1}>
-   
-      <Button color="primary"
-  variant="contained"
-  component="label"
-  
->
-Incarca amintiri
-  <input
-    type="file"
-    onChange={handleMediaChange}
-    hidden
-    multiple
-    accept="image/*,video/*"
-  />
-</Button>
 
     <Box sx={{display:"flex",flexDirection:"row",flexWrap:"wrap"}}>
       {medialinks.map((file,index)=>(
@@ -398,4 +321,4 @@ Incarca amintiri
         </div>
     );
 };
-export default ProfilePage;
+export default ProfilePagepublic;
