@@ -4,6 +4,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import axios from 'axios';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import hamburger from './hamburger.svg';
 
 
 interface menuprops {
@@ -49,8 +50,8 @@ const Mymenu:React.FC<Menuprops>=({uid})=>{
     var styles = {
         bmBurgerButton: {
           position: 'fixed',
-          width: '36px',
-          height: '30px',
+          width: '72px',
+          height: '60px',
           left: '36px',
           top: '36px'
         },
@@ -86,7 +87,8 @@ const Mymenu:React.FC<Menuprops>=({uid})=>{
         },
         bmItem: {
           display: 'inline-block',
-          color:'white'
+          color:'white',
+          fontFamily:"Futura"
         },
         bmOverlay: {
           background: 'rgba(0, 0, 0, 0.3)'
@@ -94,7 +96,7 @@ const Mymenu:React.FC<Menuprops>=({uid})=>{
       };
 
     return (
-      <Menu styles= {styles} width={'200px'}>
+      <Menu styles= {styles} width={'150px'} customBurgerIcon={<img src={hamburger}/>}>
         <a href="/" style={{color:'white',textDecoration: 'none'}}>
         <div style={{
     display: 'flex',
@@ -116,25 +118,21 @@ const Mymenu:React.FC<Menuprops>=({uid})=>{
         </a>
         <br/><br/>
 
-       <a href={"/profile/"+uid} style={{color:'white',textDecoration: 'none'}}>
+      {uid?<a href={"/profile/"+uid} style={{color:'white',textDecoration: 'none'}}>
         <div style={{
     display: 'flex',
     alignItems: 'center',
     flexWrap: 'wrap'}}>
       
        <VisibilityIcon/>
-        Public view
-        </div>  
-        <br/><br/>
-        </a>
-       
-        
+        View
+        </div>
+        </a>:""}
+       <br/><br/>
+        <div>
         <Button color='primary' variant="outlined"
   component="label"><a id="logout" className="menu-item" onClick={handlelogout}>Logout</a></Button>
-
-
-
-  
+</div>
       </Menu>
     );
   }

@@ -4,6 +4,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import axios from 'axios';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import hamburger from './hamburger.svg';
 
 
 interface menuprops {
@@ -49,8 +50,8 @@ const Publicmenu:React.FC<Menuprops>=({uid})=>{
     var styles = {
         bmBurgerButton: {
           position: 'fixed',
-          width: '36px',
-          height: '30px',
+          width: '72px',
+          height: '60px',
           left: '36px',
           top: '36px'
         },
@@ -65,7 +66,7 @@ const Publicmenu:React.FC<Menuprops>=({uid})=>{
           width: '24px'
         },
         bmCross: {
-          background: 'white'//'#bdc3c7'
+          background: 'white',//'#bdc3c7
         },
         bmMenuWrap: {
           position: 'fixed',
@@ -75,7 +76,8 @@ const Publicmenu:React.FC<Menuprops>=({uid})=>{
           background: 'black',//'#373a47',
           padding: '2.5em 0em 0',
           fontSize: '1.2em',
-          overflow:'hidden'
+          overflow:'hidden',
+          minWidth:'120px'
         },
         bmMorphShape: {
           fill:' #FFDF00',//'#373a47'
@@ -86,7 +88,8 @@ const Publicmenu:React.FC<Menuprops>=({uid})=>{
         },
         bmItem: {
           display: 'inline-block',
-          color:'white'
+          color:'white',
+           fontFamily:"Futura"
         },
         bmOverlay: {
           background: 'rgba(0, 0, 0, 0.3)'
@@ -94,7 +97,7 @@ const Publicmenu:React.FC<Menuprops>=({uid})=>{
       };
 
     return (
-      <Menu styles= {styles} width={'200px'}>
+      <Menu styles= {styles} width={'10%'} customBurgerIcon={<img src={hamburger}/>}>
         <a href="/" style={{color:'white',textDecoration: 'none'}}>
         <div style={{
     display: 'flex',

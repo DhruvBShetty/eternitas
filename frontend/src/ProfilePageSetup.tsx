@@ -85,7 +85,7 @@ const ProfilePageSetup = () => {
 
     return (
         <div>
-        {id && <Mymenu uid={id}/>}
+        {<Mymenu uid={id}/>}
         <Container maxWidth="sm" sx={{ mt: 4 }}>
             
             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>

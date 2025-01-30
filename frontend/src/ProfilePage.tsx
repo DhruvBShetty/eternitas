@@ -1,4 +1,5 @@
 import React, { useState,useEffect, MouseEventHandler,useRef } from "react";
+import {useNavigate} from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { Container, Typography, Button, Box, CircularProgress, Snackbar, Alert, Avatar, Grid,Tabs,Tab,createTheme,ThemeProvider } from "@mui/material";
 import { getprofiledata,profileupload,mediaupload,getmedia } from "./api";
@@ -6,6 +7,8 @@ import { amber,brown } from '@mui/material/colors';
 import Swal from 'sweetalert2'
 import Mymenu from "./Components/Menu";
 import Modal from '@mui/material/Modal';
+import DeleteIcon from '@mui/icons-material/Delete';
+import Logo from './logo.png';
 
 const theme = createTheme({
     palette: {
@@ -74,9 +77,15 @@ const ProfilePage = () => {
     const handleClose = () => setOpen(false);
     const [modalpic,setmodalpic]=useState("");
     const [pfpic,setPfpic]=useState("")
+    const navigate = useNavigate(); 
     const videoRef = useRef<HTMLVideoElement | null>(null);
 
     const style = {
+      paddingBottom:0,
+      display:"flex",
+      alignItems:"center",
+      flexDirection:"column",
+      backgroundColor:"beige",
       position: 'absolute',
       top: '50%',
       left: '50%',
@@ -108,6 +117,9 @@ const ProfilePage = () => {
             setprofiledata(pdata);
             setPfpic(imglink+pdata.Profile_pic);
             }
+            else{
+              navigate("/profilepagesetup");
+            }
         }
             )
         }
@@ -136,6 +148,7 @@ const ProfilePage = () => {
         }
       }
      getmlinks()
+     
     },[])
 
     const handleProfilePicChange =async(event: React.ChangeEvent<HTMLInputElement>) => {
@@ -174,16 +187,23 @@ const ProfilePage = () => {
             const filesArray = Array.from(event.target.files);
             setMediaFiles((prev) => [...prev, ...filesArray]);
 
-            try{
-              await mediaupload(filesArray)
-              Swal.fire({
-               icon:"success",
-               title:"Successful",
-               text:"Media files was updated"
+            const mediaset:Set<string|undefined>=new Set(medialinks.map(item=>item.split('/').pop()));
+
+            filesArray.forEach(ele => {
+              if(mediaset.has(ele.name)){
+
+                Swal.fire({
+                  icon:"error",
+                  title:"Duplicate",
+                  text:`Media file with name:${ele.name} already exists`
+
+                })
               }
-              ).then(()=>{
-               window.location.reload();
-              })
+              
+            });
+
+            try{
+              await mediaupload(filesArray);
          }catch(error:unknown){
            Swal.fire({
              icon:"error",
@@ -193,6 +213,8 @@ const ProfilePage = () => {
 
         }
     };
+
+    event.target.value="";
   }
     const handleEditMedia = (index: number) => {
         console.log("Edit media at index:", index);
@@ -225,10 +247,14 @@ const ProfilePage = () => {
     };
 
     return (
+      
       <div>
         {profileData?.id && <Mymenu uid={profileData.id}/>}
      
         <Container>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+                <img src={Logo} alt="Logo" style={{ width: '150px' }} />
+            </Box>
           
             <ThemeProvider theme={theme}>
             <Box sx={{ textAlign: 'center', mt: 3 }}>
@@ -277,13 +303,13 @@ const ProfilePage = () => {
                     <Box sx={{ mt: 3 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'center', mb: -2.5 }}>
                             {profileData.First_name && (
-                                <Typography sx={{ mr: 1 }}>{profileData.First_name}</Typography>
+                                <Typography sx={{ mr: 1,fontWeight:'bold' }}>{profileData.First_name}</Typography>
                             )}
                             {profileData.Middle_name && (
-                                <Typography sx={{ mr: 1 }}>{profileData.Middle_name}</Typography>
+                                <Typography sx={{ mr: 1,fontWeight:'bold' }}>{profileData.Middle_name}</Typography>
                             )}
                             {profileData.Last_name && (
-                                <Typography>{profileData.Last_name}</Typography>
+                                <Typography sx={{ mr: 1,fontWeight:'bold' }}>{profileData.Last_name}</Typography>
                                 
                             )}
                         </Box>
@@ -297,7 +323,7 @@ const ProfilePage = () => {
                        
                         {profileData.Date_of_death && (
                             <Typography>
-                                <strong>Age:</strong> {calculateAge(profileData.Date_of_birth, profileData.Date_of_death)} years
+                                Age: {calculateAge(profileData.Date_of_birth, profileData.Date_of_death)} years
                             </Typography>
                         )}
                         {profileData.Relationship && (
@@ -390,7 +416,11 @@ Incarca amintiri
       >
         <Box sx={style} className="modalContent">
           <img src={modalpic} style={{display:"block"}}/>
+         <p style={{display: 'flex',flexWrap: 'wrap'}}>
+          {modalpic.split("/").pop()} <span style={{float:'right',flex:1}}><DeleteIcon/></span></p>
+         
         </Box>
+        
       </Modal>
     </Box>
     </ThemeProvider>

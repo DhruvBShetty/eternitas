@@ -15,11 +15,11 @@ export interface profiledata {
     description:string
 }
 
-export const loginUser = async (email: string, password: string) => {
+export const loginUser = async (email: string, password: string,remember:boolean) => {
     try {
         const response = await axios.post(
             `${process.env.REACT_APP_SERVER_ENV}/api/login`,
-            { email, password }, // Request body
+            { email, password,remember}, // Request body
             {
                 withCredentials: true, // Include cookies in the request
                 headers: {

@@ -7,7 +7,7 @@ import Swal from 'sweetalert2'
 import Mymenu from "./Components/Menu";
 import Modal from '@mui/material/Modal';
 import Publicmenu from "./Components/Publicmenu";
-
+import Logo from './logo.png';
 const theme = createTheme({
     palette: {
       primary: {
@@ -174,7 +174,9 @@ const ProfilePagepublic = () => {
       <div>
         <Publicmenu/>
         <Container>
-          
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+                <img src={Logo} alt="Logo" style={{ width: '150px' }} />
+            </Box>
             <ThemeProvider theme={theme}>
             <Box sx={{ textAlign: 'center', mt: 3 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>

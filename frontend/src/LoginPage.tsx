@@ -21,6 +21,7 @@ const LoginPage = () => {
     const [showPassword, setShowPassword] = useState(false); 
     const [user,setUser]=useState(null);
     const session = useContext(AuthContext);
+    const [ischecked,setChecked]=useState(false)
 
 
 
@@ -29,6 +30,10 @@ const LoginPage = () => {
             navigate("/profile");
         }
     },[session])
+
+    const handleCheck = (event:React.ChangeEvent<HTMLInputElement>) => {
+        setChecked(event.target.checked); // Update state based on the checkbox status
+      };
 
     
     
@@ -52,7 +57,7 @@ const LoginPage = () => {
     
         if (!hasError) {
             try {
-                await loginUser(email, password).then(()=>{
+                await loginUser(email, password,ischecked).then(()=>{
                     window.location.reload();
                 })
                
@@ -147,7 +152,7 @@ const LoginPage = () => {
                     />
 
                     <FormControlLabel 
-                        control={<Checkbox value="remember" color="primary" />}
+                        control={<Checkbox checked={ischecked} onChange={handleCheck} color="primary" />}
                         label="Remember me"
                     />
 
@@ -180,15 +185,6 @@ const LoginPage = () => {
                             sx={{ color: '#212121', textDecoration: 'none', '&:hover': { color: '#ffca28' } }}
                         >
                             Forgot password?
-                        </Link>
-                    </Grid2>
-                    <Grid2>
-                        <Link 
-                            component={RouterLink} 
-                            to="/register"
-                            sx={{ color: '#212121', textDecoration: 'none', '&:hover': { color: '#ffca28' } }}
-                        >
-                            Sign Up 
                         </Link>
                     </Grid2>
                 </Grid2>

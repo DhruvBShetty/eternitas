@@ -6,7 +6,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import jwt  
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta,timezone
 from dotenv import load_dotenv
 from supabase import create_client
 import os
@@ -49,6 +49,7 @@ app.add_middleware(
 class User(BaseModel):
     email: str
     password: str
+    remember:bool
 
 class Email(BaseModel):
     email:str
@@ -59,7 +60,7 @@ class Password(BaseModel):
 
 @app.get("/")
 async def home():
-    return {"message": "Welcome to FastAPI"}
+    return {"message": "Welcome to Eternitas"}
 
 
 @app.post("/api/register")
@@ -90,9 +91,13 @@ async def login(user:User,request:Response):
     except APIError:
         raise HTTPException(status_code=400, detail=e.details)
     
-
     
-    payload={"email":user.email,"id":myuser.data[0].get("id"),"exp": datetime.now() + timedelta(hours=1)}
+    remember_for=5
+
+    if(user.remember):
+        remember_for=20
+ 
+    payload={"email":user.email,"id":myuser.data[0].get("id"),"exp": datetime.now(timezone.utc) + timedelta(minutes=remember_for)}
     token=jwt.encode(payload,et_key,algorithm="HS256")
     request.set_cookie(key="Eternitas_session",value=token,httponly=True,samesite="Strict")
     
