@@ -21,6 +21,12 @@ from botocore.exceptions import NoCredentialsError
 import uuid
 import httpx
 from typing import List
+import hmac
+import hashlib
+import base64
+import string
+import random
+
 
 load_dotenv()
 
@@ -33,6 +39,7 @@ aws_access=os.environ.get("AWS_ACCESS_KEY")
 aws_secret=os.environ.get("AWS_SECRET_KEY")
 aws_bucket=os.environ.get("AWS_S3_BUCKET_NAME")
 aws_region=os.environ.get("AWS_REGION")
+webhook=os.environ.get("SHOPIFY_WEBHOOK_KEY")
 
 
 supabase= create_client(url, key)
@@ -58,6 +65,11 @@ class Password(BaseModel):
     password:str
     token: str = Depends(security)
 
+
+def generate_password(length=12):
+    characters = string.ascii_letters + string.digits + string.punctuation
+    return ''.join(random.choice(characters) for _ in range(length))
+
 @app.get("/")
 async def home():
     return {"message": "Welcome to Eternitas"}
@@ -77,6 +89,38 @@ async def register(user: User):
         
     user=supabase.auth.sign_up({"email": user.email, "password": user.password})
     return {"message": "Registration successful. Please check your email to verify your account."}
+
+@app.post("/api/registeruser") 
+async def registeruser(request:Request):
+    raw_body=await request.body()
+    print(raw_body)
+    shopify_hmac_header=request.headers.get('x-shopify-hmac-sha256')
+    secret=webhook.encode("utf-8")
+    computed_hmac = hmac.new(secret, raw_body, hashlib.sha256).digest()
+    computed_hmac_base64 = base64.b64encode(computed_hmac).decode()
+
+    if not hmac.compare_digest(computed_hmac_base64, shopify_hmac_header):
+        raise HTTPException(status_code=400, detail="Invalid HMAC")
+
+    salt=bcrypt.gensalt(rounds=8)
+    password=generate_password()
+    hash=str(bcrypt.hashpw(password.encode('utf-8'), salt))
+
+    body=json.loads(raw_body.decode('utf-8'))
+    email=body["contact_email"]
+
+    try:
+        acc=supabase.table("Account").insert([{"created_at":date.today().strftime("%Y-%m-%d"),"email":email,"password":hash}]).execute()
+    except APIError as e:
+        print(e)
+        raise HTTPException(status_code=400, detail=e.details)
+
+    try:
+        user=supabase.auth.sign_up({"email": email, "password": password,"options":{
+        "email_redirect_to":"https://eternitas-story.ro/Reset-password",}})
+    except APIError as e:
+        print(e)
+        raise HTTPException(status_code=400, detail=e.details)
 
 
 @app.post("/api/login")
