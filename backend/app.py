@@ -131,7 +131,7 @@ async def login(user:User,request:Response):
         raise HTTPException(status_code=e.status, detail=e.message)
     
     try:
-        myuser = supabase.table("Account").select("id").eq("email",user.email).execute()
+        myuser =supabase.table("Account").select("id").eq("email",user.email).execute()
     except APIError:
         raise HTTPException(status_code=400, detail=e.details)
     
