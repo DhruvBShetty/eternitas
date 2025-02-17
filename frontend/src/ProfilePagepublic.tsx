@@ -174,7 +174,7 @@ const ProfilePagepublic = () => {
       <div>
         <Publicmenu/>
         <Container>
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4,pt:5}}>
                 <img src={Logo} alt="Logo" style={{ width: '150px' }} />
             </Box>
             <ThemeProvider theme={theme}>
