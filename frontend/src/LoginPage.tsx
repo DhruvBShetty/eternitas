@@ -1,17 +1,61 @@
 import React, { useEffect, useState,useContext } from "react";
-import { Avatar, Container, Paper, Typography, Box, TextField, FormControlLabel, Checkbox, Button, Grid2, Link, IconButton } from "@mui/material";
+import { Avatar, Container, Paper, Typography, Box, TextField, FormControlLabel, Checkbox, Button, Grid2, Link, IconButton, createTheme, ThemeProvider} from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { Link as RouterLink, useNavigate } from "react-router-dom"; 
 import { loginUser } from './api';  
 import Logo from './logo.png'; 
 import { AuthContext } from "./Auth/Auth";
- 
-console.log()
+
+
+const fieldtheme=createTheme({
+    components:{
+        MuiInputBase:{
+            styleOverrides:{
+                root:{
+                    backgroundColor:'#e1e2e6',
+                    border:"0px"
+                },
+            }
+
+        },
+
+    MuiOutlinedInput:{
+        styleOverrides:{
+            root:{
+                "& .MuiOutlinedInput-notchedOutline": {
+              borderWidth: "0px",
+            },
+                "&.Mui-focused": {
+            "& .MuiOutlinedInput-notchedOutline": {
+              borderColor: "black",
+            }},
+                borderRadius:10
+            },
+        }
+    },
+    }
+})
+
+// const cktheme = createTheme({
+//     components: {
+//       MuiSvgIcon: {
+//         styleOverrides: {
+//           root: {
+//             backgroundColor: "#e1e2e6", // Background when unchecked
+//             borderWidth:'0px',
+//           },
+//         },
+//       },
+//     },
+//   });
+
 
 
 const LoginPage = () => {
+
     const navigate = useNavigate(); 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -86,8 +130,8 @@ const LoginPage = () => {
        
             <Box 
                 sx={{ 
-                    mb: { xs: 8, sm: 12, md: 16 }, 
-                    mt: { xs: 4, sm: 5, md: 12 },
+                    mb: { xs: 8, sm: 10, md: 12 }, 
+                    mt: { xs: 4, sm: 5, md: 8 },
                     display: "flex",
                     justifyContent: 'center',
                     cursor: 'pointer' 
@@ -96,25 +140,24 @@ const LoginPage = () => {
                 <img 
                     src={Logo} 
                     alt="Logo"
-                    style={{ width: '90%', maxWidth: '450px'}} 
+                    style={{ width: '60%', maxWidth: '450px'}} 
                 />
             </Box>
             
-            <Paper elevation={10} sx={{ padding: 2, width: '100%', maxWidth:'400px' }}>
-                <Avatar sx={{
-                    mx: "auto",
-                    bgcolor:"#212121",
-                    textAlign: "center",
-                    mb: 2,
-                }} >
-                    <LockOutlinedIcon />
-                </Avatar>
+            <Paper elevation={10} sx={{ padding:'7%', vw: '90%', maxWidth:'450px', borderRadius:'5%',backgroundColor:'#f3f3f3'}}>
+             
+                <Typography sx={{textAlign:"center"}}>
+                <img src={`${process.env.PUBLIC_URL}/lock.svg`} width='10%'/>
+                </Typography>
 
-                <Typography component="h1" variant="h5" sx={{ textAlign: "center", fontSize: { xs: 'h6.fontSize', sm: 'h5.fontSize' }}}>
+                
+
+                <Typography component="h1" variant="h5" sx={{ textAlign: "center", fontSize: { xs: 'h6.fontSize', sm: 'h5.fontSize' },fontWeight:'bold'}}>
                     Sign In 
                 </Typography>
 
-                <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 2 }}>
+                <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 3}}>
+                    <ThemeProvider theme={fieldtheme}>
                     <TextField 
                         placeholder="Enter email" 
                         fullWidth 
@@ -125,9 +168,8 @@ const LoginPage = () => {
                         onChange={(e) => setEmail(e.target.value)}
                         error={!!emailError}
                         helperText={emailError}
-                        sx={{ mb: 2 }}
                     />
-
+               
                     <TextField 
                         placeholder="Enter password" 
                         fullWidth 
@@ -137,7 +179,6 @@ const LoginPage = () => {
                         onChange={(e) => setPassword(e.target.value)}
                         error={!!passwordError}
                         helperText={passwordError}
-                        sx={{ mb: 2 }}
                         InputProps={{
                             endAdornment: (
                                 <IconButton
@@ -150,24 +191,32 @@ const LoginPage = () => {
                             ),
                         }}
                     />
+                   </ThemeProvider>
 
+                   
                     <FormControlLabel 
-                        control={<Checkbox checked={ischecked} onChange={handleCheck} color="primary" />}
+                        control={<Checkbox checked={ischecked} onChange={handleCheck} 
+                        icon={<CheckBoxOutlineBlankIcon sx={{ color:'#e1e2e6',backgroundColor:'#e1e2e6'}} />}/>}
                         label="Remember me"
+                        sx={{color:"#808080",padding:0}}
                     />
-
+                  
                     <Button 
                         type="submit" 
                         variant="contained" 
                         fullWidth 
                         sx={{
+                            display:'flex',
+                            alignItems:'center',
                             mt: 2, 
                             bgcolor: "black", 
                             color: "white", 
-                            '&:hover': { bgcolor: "#ffca28" }
+                            '&:hover': { bgcolor: "#ffca28" },
+                            padding:2,
+                            borderRadius:3
                         }}
                     >
-                        Sign in 
+                       <Typography sx={{fontWeight:700}}>Sign in</Typography>
                     </Button>
 
                     {apiError && (
@@ -177,7 +226,7 @@ const LoginPage = () => {
                     )}
                 </Box>
 
-                <Grid2 container justifyContent='space-between' sx={{ mt: 2 }}>
+                <Grid2 container justifyContent='space-between' sx={{ mt: 2}}>
                     <Grid2>
                         <Link 
                             component={RouterLink} 
