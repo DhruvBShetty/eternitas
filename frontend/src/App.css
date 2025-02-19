@@ -38,12 +38,12 @@
 }
 
 .Sidebar {
-  width:fit-content;
+  width: fit-content;
   height: auto;
   position: relative;
   text-align: center;
   min-width: 100px;
-  float:left;
+  float: left;
 }
 
 .bm-menu {
@@ -52,14 +52,14 @@
   font-size: 1.15em;
 }
 
-.iconmenu{
-  display: 'flex';
-  align-items: 'center';
+.iconmenu {
+  display: "flex";
+  align-items: "center";
   flex-wrap: wrap;
 }
 
-.modalContent::-webkit-scrollbar{
-  width:0px;
+.modalContent::-webkit-scrollbar {
+  width: 0px;
 }
 
 .modalContent::-webkit-scrollbar-track {
@@ -67,60 +67,72 @@
 }
 
 .modalContent::-webkit-scrollbar-thumb {
-  background:#ffca28; /* Make the scrollbar thumb invisible */
-  border-radius: 6px; 
+  background: #ffca28; /* Make the scrollbar thumb invisible */
+  border-radius: 6px;
   border: 3px solid transparent;
   background-clip: content-box;
-  width:2px;
+  width: 2px;
 }
 
 .loader {
-  color:black;
-  font-family:sans-serif;
-  height:5vh;
-  left:50%;
-  overflow-x:hidden;
-  padding-top:7vh;
-  position:absolute;
-  text-align:center;
-  top:50%;
-  transform:translate(-50%,-50%);
-  width:50vw;
+  color: black;
+  font-family: sans-serif;
+  height: 5vh;
+  left: 50%;
+  overflow-x: hidden;
+  padding-top: 7vh;
+  position: absolute;
+  text-align: center;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 50vw;
   &:before {
-    animation:left-to-right 3s alternate infinite linear;
-    background-image:linear-gradient(to right, transparent, #ffca28, transparent);
-    bottom:0;
-    content:"";
-    height:5vh;
-    left:0;
-    overflow:hidden;
-    position:absolute;
-    right:0;
-    top:0;
+    animation: left-to-right 3s alternate infinite linear;
+    background-image: linear-gradient(
+      to right,
+      transparent,
+      #ffca28,
+      transparent
+    );
+    bottom: 0;
+    content: "";
+    height: 5vh;
+    left: 0;
+    overflow: hidden;
+    position: absolute;
+    right: 0;
+    top: 0;
   }
   &:after {
-    background-image:repeating-linear-gradient(
+    background-image: repeating-linear-gradient(
       90deg,
       white,
       white 1vw,
       transparent 1vw,
       transparent 10vw
     );
-    content:"";
-    height:5vh;
-    left:0;
-    overflow:hidden;
-    position:absolute;
-    right:0;
-    top:0;
+    content: "";
+    height: 5vh;
+    left: 0;
+    overflow: hidden;
+    position: absolute;
+    right: 0;
+    top: 0;
   }
 }
 
 @keyframes left-to-right {
   0% {
-    transform:translateX(-100%);
+    transform: translateX(-100%);
   }
   100% {
-    transform:translateX(100%);
+    transform: translateX(100%);
   }
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #e1e2e6 inset !important;
 }

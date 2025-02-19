@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { ThemeProvider, createTheme } from "@mui/material";
 import {
   Container,
   Typography,
@@ -13,6 +14,42 @@ import Logo from "./logo.png";
 import { profilesubmit, getprofiledata, profiledata } from "./api";
 import Swal from "sweetalert2";
 import Mymenu from "./Components/Menu";
+
+const fieldtheme = createTheme({
+  components: {
+    MuiInputBase: {
+      styleOverrides: {
+        root: {
+          backgroundColor: "#EEEEEE",
+          border: "0px",
+        },
+      },
+    },
+
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          "& .MuiOutlinedInput-notchedOutline": {
+            borderWidth: "1px",
+          },
+          "&.Mui-focused": {
+            "& .MuiOutlinedInput-notchedOutline": {
+              borderColor: "black",
+            },
+          },
+          borderRadius: 10,
+        },
+      },
+    },
+    MuiTypography: {
+      styleOverrides: {
+        root: {
+          marginBottom: 5,
+        },
+      },
+    },
+  },
+});
 
 interface PersonData {
   id: number;
@@ -88,9 +125,9 @@ const ProfilePageSetup = () => {
 
   return (
     <div>
-      {<Mymenu uid={id} />}
+      <Mymenu uid={id} />
       <Container maxWidth="sm">
-        <Box sx={{ display: "flex", justifyContent: "center", mb: 4, pt: 5 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", mb: 4, pt: 3 }}>
           <img src={Logo} alt="Logo" style={{ width: "150px" }} />
         </Box>
 
@@ -132,98 +169,102 @@ const ProfilePageSetup = () => {
         </Box>
 
         {displayform && (
-          <Paper elevation={3} sx={{ padding: 3 }}>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              {profileType} Information
-            </Typography>
+          <Box sx={{ padding: 2 }}>
+            <ThemeProvider theme={fieldtheme}>
+              <Typography>Nume</Typography>
+              <TextField
+                variant="outlined"
+                fullWidth
+                required
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                sx={{ mb: 2 }}
+              />
 
-            <TextField
-              label="First Name"
-              variant="outlined"
-              fullWidth
-              required
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              sx={{ mb: 2 }}
-            />
+              <Typography>AI doilea prenume</Typography>
+              <TextField
+                variant="outlined"
+                fullWidth
+                value={middleName}
+                onChange={(e) => setMiddleName(e.target.value)}
+                sx={{ mb: 2 }}
+              />
 
-            <TextField
-              label="Middle Name"
-              variant="outlined"
-              fullWidth
-              value={middleName}
-              onChange={(e) => setMiddleName(e.target.value)}
-              sx={{ mb: 2 }}
-            />
+              <Typography>Prenume</Typography>
+              <TextField
+                variant="outlined"
+                fullWidth
+                required
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                sx={{ mb: 2 }}
+              />
 
-            <TextField
-              label="Last Name"
-              variant="outlined"
-              fullWidth
-              required
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              sx={{ mb: 2 }}
-            />
+              <Typography>Data nașterii</Typography>
+              <TextField
+                variant="outlined"
+                fullWidth
+                type="date"
+                InputLabelProps={{ shrink: true }}
+                value={dob}
+                onChange={(e) => setDob(e.target.value)}
+                sx={{ mb: 2 }}
+              />
 
-            <TextField
-              label="Date of Birth"
-              variant="outlined"
-              fullWidth
-              type="date"
-              InputLabelProps={{ shrink: true }}
-              value={dob}
-              onChange={(e) => setDob(e.target.value)}
-              sx={{ mb: 2 }}
-            />
+              <Typography>Data decesului</Typography>
+              <TextField
+                variant="outlined"
+                fullWidth
+                type="date"
+                InputLabelProps={{ shrink: true }}
+                value={deathDate}
+                onChange={(e) => setDeathDate(e.target.value)}
+                sx={{ mb: 2 }}
+              />
 
-            <TextField
-              label="Date of Death" // New input field for death date
-              variant="outlined"
-              fullWidth
-              type="date"
-              InputLabelProps={{ shrink: true }}
-              value={deathDate}
-              onChange={(e) => setDeathDate(e.target.value)}
-              sx={{ mb: 2 }}
-            />
+              <Typography>Relația cu persoana</Typography>
+              <TextField
+                select
+                variant="outlined"
+                fullWidth
+                value={relationship}
+                onChange={(e) => setRelationship(e.target.value)}
+                sx={{ mb: 2 }}
+              >
+                <MenuItem value="Parent">Parent</MenuItem>
+                <MenuItem value="Brother">Brother</MenuItem>
+                <MenuItem value="Sister">Sister</MenuItem>
+                <MenuItem value="Friend">Friend</MenuItem>
+                <MenuItem value="Other">Other</MenuItem>
+              </TextField>
 
-            <TextField
-              select
-              label="Relationship"
-              variant="outlined"
-              fullWidth
-              value={relationship}
-              onChange={(e) => setRelationship(e.target.value)}
-              sx={{ mb: 2 }}
-            >
-              <MenuItem value="Parent">Parent</MenuItem>
-              <MenuItem value="Brother">Brother</MenuItem>
-              <MenuItem value="Sister">Sister</MenuItem>
-              <MenuItem value="Friend">Friend</MenuItem>
-              <MenuItem value="Other">Other</MenuItem>
-            </TextField>
-
-            <TextField
-              label="Profile Description"
-              variant="outlined"
-              multiline
-              rows={4}
-              fullWidth
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              sx={{ mb: 2 }}
-            />
-
+              <Typography>Descriere</Typography>
+              <TextField
+                variant="outlined"
+                multiline
+                rows={4}
+                fullWidth
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                sx={{ mb: 2 }}
+              />
+            </ThemeProvider>
             <Button
               variant="contained"
               color="primary"
               fullWidth
               onClick={handleSubmit}
+              sx={{
+                mb: 2,
+                bgcolor: "black",
+                borderRadius: 3,
+                padding: 2,
+                mt: 2,
+              }}
             >
-              Submit
+              <Typography sx={{ fontWeight: 700 }}> Salvează</Typography>
             </Button>
-          </Paper>
+          </Box>
         )}
       </Container>
     </div>

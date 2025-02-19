@@ -47,7 +47,7 @@ s3_client=boto3.client(service_name='s3',region_name=aws_region,aws_access_key_i
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://192.168.1.11:3000","http://localhost:3000"],
     allow_methods=["*"],
     allow_headers=["*"],
     allow_credentials=True
@@ -128,18 +128,20 @@ async def login(user:User,request:Response):
     try:
         user_d=supabase.auth.sign_in_with_password({"email":user.email,"password":user.password})
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=e.status, detail=e.message)
     
     try:
         myuser =supabase.table("Account").select("id").eq("email",user.email).execute()
-    except APIError:
+    except APIError as e:
+        print(e)
         raise HTTPException(status_code=400, detail=e.details)
     
     
     remember_for=5
 
     if(user.remember):
-        remember_for=20
+        remember_for=2000
  
     payload={"email":user.email,"id":myuser.data[0].get("id"),"exp": datetime.now(timezone.utc) + timedelta(minutes=remember_for)}
     token=jwt.encode(payload,et_key,algorithm="HS256")
