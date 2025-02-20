@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import square from "./Components/emptysquare.png";
+import AddIcon from "@mui/icons-material/Add";
 import {
   Container,
   Typography,
@@ -16,12 +18,14 @@ import {
   ThemeProvider,
 } from "@mui/material";
 import { getprofiledata, profileupload, mediaupload, getmedia } from "./api";
-import { amber, brown } from "@mui/material/colors";
+import { amber, brown, grey } from "@mui/material/colors";
 import Swal from "sweetalert2";
 import Mymenu from "./Components/Menu";
 import Modal from "@mui/material/Modal";
 import DeleteIcon from "@mui/icons-material/Delete";
 import Logo from "./logo.png";
+import Namecomp from "./Components/Namecomp";
+
 const theme = createTheme({
   palette: {
     primary: {
@@ -62,7 +66,7 @@ function CustomTabPanel(props: TabPanelProps) {
       aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+      {value === index && <Box sx={{ mt: 3 }}>{children}</Box>}
     </div>
   );
 }
@@ -113,24 +117,22 @@ const ProfilePage = () => {
   const [pfpic, setPfpic] = useState("");
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [remsq, setRemsq] = useState(3);
+  const fileInputRef = useRef(null);
 
   const style = {
-    paddingBottom: 0,
     display: "flex",
     alignItems: "center",
     flexDirection: "column",
-    backgroundColor: "beige",
+    backgroundColor: "white",
     position: "absolute",
     top: "50%",
     left: "50%",
     transform: "translate(-50%, -50%)",
-    height: "auto",
-    width: "auto",
-    border: "2px solid black",
-    maxWidth: "80%",
-    maxHeight: "80%",
     overflowX: "auto",
     overflowY: "scroll",
+    p: "0.8%",
+    borderRadius: 2,
   };
 
   const imglink = "https://eternitas-media.s3.eu-central-1.amazonaws.com/";
@@ -167,6 +169,7 @@ const ProfilePage = () => {
       try {
         const data: Array<string> = await getmedia();
         setMedialinks(data);
+        setRemsq(3 - (data.length % 3));
       } catch (error: any) {
         Swal.fire({
           icon: "error",
@@ -226,6 +229,13 @@ const ProfilePage = () => {
 
       try {
         await mediaupload(filesArray);
+        Swal.fire({
+          icon: "success",
+          title: "Successful",
+          text: "Încărcarea fișierelor media a fost realizată cu succes",
+        }).then(() => {
+          window.location.reload();
+        });
       } catch (error: unknown) {
         Swal.fire({
           icon: "error",
@@ -270,10 +280,12 @@ const ProfilePage = () => {
   };
 
   return (
-    <div>
+    <>
       {profileData?.id && <Mymenu uid={profileData.id} />}
 
-      <Container>
+      <Container
+        sx={{ flex: "display", justifyContent: "center", alignItems: "center" }}
+      >
         <Box sx={{ display: "flex", justifyContent: "center", mb: 4, pt: 3 }}>
           <img src={Logo} alt="Logo" style={{ width: "150px" }} />
         </Box>
@@ -298,13 +310,12 @@ const ProfilePage = () => {
               <label htmlFor="profile-pic-upload">
                 <Avatar
                   sx={{
-                    width: 150,
-                    height: 150,
+                    width: 170,
+                    height: 170,
                     bgcolor: "secondary",
                     cursor: "pointer",
                     position: "relative",
                     marginTop: 1,
-                    border: "2px solid #ffca28",
                     "&:hover": { opacity: 0.8 },
                   }}
                 >
@@ -331,59 +342,44 @@ const ProfilePage = () => {
                   )}
                 </Avatar>
               </label>
-              <Box
-                sx={{ width: "90%", borderBottom: "2px solid #ffca28", my: 2 }}
-              />
             </Box>
 
             {profileData ? (
               <Box sx={{ mt: 3 }}>
-                <Box
-                  sx={{ display: "flex", justifyContent: "center", mb: -2.5 }}
-                >
-                  {profileData.First_name && (
-                    <Typography sx={{ mr: 1, fontWeight: "bold" }}>
-                      {profileData.First_name}
-                    </Typography>
-                  )}
-                  {profileData.Middle_name && (
-                    <Typography sx={{ mr: 1, fontWeight: "bold" }}>
-                      {profileData.Middle_name}
-                    </Typography>
-                  )}
-                  {profileData.Last_name && (
-                    <Typography sx={{ mr: 1, fontWeight: "bold" }}>
-                      {profileData.Last_name}
-                    </Typography>
-                  )}
-                </Box>
-                <Box sx={{ mb: 1 }}>
-                  {profileData.Date_of_death && (
-                    <Typography sx={{ fontFamily: "Times New Roman" }}>
-                      <p></p>
-                      {new Date(profileData.Date_of_birth).toLocaleDateString(
-                        "en-GB"
-                      )}{" "}
-                      -{" "}
-                      {new Date(profileData.Date_of_death).toLocaleDateString(
-                        "en-GB"
-                      )}
-                    </Typography>
-                  )}
-                </Box>
+                <Namecomp
+                  first_name={profileData.First_name}
+                  middle_name={profileData.Middle_name}
+                  last_name={profileData.Last_name}
+                  fweight={700}
+                  fsize="20px"
+                />
+
+                {profileData.Date_of_death && profileData.Date_of_birth && (
+                  <Typography
+                    sx={{ fontFamily: "Times New Roman", fontWeight: 700 }}
+                  >
+                    <p></p>
+                    {new Date(profileData.Date_of_birth).toLocaleDateString(
+                      "ro-RO"
+                    )}{" "}
+                    -{" "}
+                    {new Date(profileData.Date_of_death).toLocaleDateString(
+                      "ro-RO"
+                    )}
+                  </Typography>
+                )}
 
                 {profileData.Date_of_death && (
-                  <Typography>
-                    Age:{" "}
+                  <Typography
+                    sx={{ fontFamily: "Times New Roman", fontWeight: 700 }}
+                  >
+                    Vârstă:{" "}
                     {calculateAge(
                       profileData.Date_of_birth,
                       profileData.Date_of_death
                     )}{" "}
-                    years
+                    ani
                   </Typography>
-                )}
-                {profileData.Relationship && (
-                  <Typography>{profileData.Relationship}</Typography>
                 )}
               </Box>
             ) : (
@@ -391,7 +387,7 @@ const ProfilePage = () => {
             )}
           </Box>
 
-          <Box sx={{ width: "100%" }}>
+          <Box sx={{ p: 2 }}>
             <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
               <Tabs
                 value={value}
@@ -400,7 +396,7 @@ const ProfilePage = () => {
                 variant="fullWidth"
                 textColor="primary"
               >
-                <Tab label="About" {...a11yProps(0)} />
+                <Tab label="Despre" {...a11yProps(0)} />
                 <Tab label="Media" {...a11yProps(1)} />
               </Tabs>
             </Box>
@@ -408,7 +404,7 @@ const ProfilePage = () => {
               {`${profileData?.Description ? profileData.Description : ""}`}
             </CustomTabPanel>
             <CustomTabPanel value={value} index={1}>
-              <Button color="primary" variant="contained" component="label">
+              {/* <Button component="label">
                 Incarca amintiri
                 <input
                   type="file"
@@ -417,13 +413,18 @@ const ProfilePage = () => {
                   multiple
                   accept="image/*,video/*"
                 />
-              </Button>
+              </Button> */}
 
               <Box
-                sx={{ display: "flex", flexDirection: "row", flexWrap: "wrap" }}
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, 1fr)",
+                  justifyContent: "space-between",
+                  gap: 1.5,
+                }}
               >
                 {medialinks.map((file, index) => (
-                  <Typography>
+                  <Box>
                     {imageExtensions.some((ext) =>
                       file.toLowerCase().endsWith(ext)
                     ) ? (
@@ -434,11 +435,10 @@ const ProfilePage = () => {
                           handleOpen();
                         }}
                         style={{
-                          width: "auto",
-                          height: 215,
-                          objectFit: "contain",
-                          marginRight: 10,
-                          marginTop: 35,
+                          width: "100%",
+                          height: "100%",
+                          aspectRatio: 1 / 1,
+                          objectFit: "cover",
                         }}
                         title={file.split("/").pop()}
                       />
@@ -451,11 +451,10 @@ const ProfilePage = () => {
                         ref={videoRef}
                         onPlay={handleFullscreen}
                         style={{
-                          width: "auto",
-                          height: 215,
-                          objectFit: "contain",
-                          marginRight: 10,
-                          marginTop: 35,
+                          width: "100%",
+                          height: "100%",
+                          aspectRatio: 1 / 1,
+                          objectFit: "cover",
                         }}
                       >
                         <source
@@ -469,30 +468,69 @@ const ProfilePage = () => {
                         {file}
                       </Typography>
                     )}
-                  </Typography>
+                  </Box>
+                ))}
+
+                {Array.from({ length: remsq }).map(() => (
+                  <Box
+                    sx={{
+                      position: "relative",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Button component="label" sx={{ p: 0 }}>
+                      <img
+                        src={square}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          aspectRatio: 1 / 1,
+                          objectFit: "cover",
+                        }}
+                      />
+                      <AddIcon
+                        sx={{
+                          position: "absolute",
+                          width: "20%",
+                          height: "20%",
+                          color: "black",
+                        }}
+                      />
+                      <input
+                        type="file"
+                        onChange={handleMediaChange}
+                        hidden
+                        multiple
+                        accept="image/*,video/*"
+                      />
+                    </Button>
+                  </Box>
                 ))}
               </Box>
             </CustomTabPanel>
-            <Modal
-              open={open}
-              onClose={handleClose}
-              aria-labelledby="modal-modal-title"
-              aria-describedby="modal-modal-description"
-            >
-              <Box sx={style} className="modalContent">
-                <img src={modalpic} style={{ display: "block" }} />
-                <p style={{ display: "flex", flexWrap: "wrap" }}>
-                  {modalpic.split("/").pop()}{" "}
-                  <span style={{ float: "right", flex: 1 }}>
-                    <DeleteIcon />
-                  </span>
-                </p>
-              </Box>
-            </Modal>
           </Box>
         </ThemeProvider>
+        <Modal
+          open={open}
+          onClose={handleClose}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <Box sx={style} className="modalContent">
+            <img
+              src={modalpic}
+              style={{
+                objectFit: "contain",
+                maxHeight: "85vh",
+                maxWidth: "85vw",
+              }}
+            />
+          </Box>
+        </Modal>
       </Container>
-    </div>
+    </>
   );
 };
 export default ProfilePage;
