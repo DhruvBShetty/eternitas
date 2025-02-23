@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { changevisibility } from "../api";
 
 type togglestate = {
   tstate: boolean;
@@ -7,8 +8,11 @@ type togglestate = {
 const Toggleopt: React.FC<togglestate> = ({ tstate }) => {
   const [togglestate, setTogglestate] = useState<boolean>(tstate);
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setTogglestate(event.target.checked);
+  const handleChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const togglechange: boolean = event.target.checked;
+    await changevisibility(togglechange).then(() => {
+      setTogglestate(togglechange);
+    });
   };
 
   return (

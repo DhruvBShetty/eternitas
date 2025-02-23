@@ -133,7 +133,7 @@ async def login(user:User,request:Response):
         raise HTTPException(status_code=e.status, detail=e.message)
     
     try:
-        myuser =supabase.table("Account").select("id").eq("email",user.email).execute()
+        myuser = supabase.table("Account").select("id").eq("email",user.email).execute()
     except APIError as e:
         print(e)
         raise HTTPException(status_code=400, detail=e.details)
@@ -337,6 +337,26 @@ async def deletemedia(request:Request,fname:str):
 
     except botocore.exceptions.ParamValidationError as error:
         raise ValueError('The parameters you provided are incorrect: {}'.format(error))
+
+@app.patch("/api/profile/visibility")
+async def update_profile_visibility(request:Request):
+    token=request.cookies.get("Eternitas_session")
+    try:
+        payload=jwt.decode(token,et_key,algorithms=["HS256"])
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=401,detail=str(e))
+    
+    data = await request.json()
+    try:
+        myuser = supabase.table("Memorial_info").update({"Privacy":data.get("Privacy")}).eq("id",payload.get("id")).execute()
+    except APIError as e:
+        print(e)
+        raise HTTPException(status_code=400, detail=e.details)
+    
+
+
+
 
        
      

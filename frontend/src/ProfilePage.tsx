@@ -61,7 +61,7 @@ interface PersonData {
   Relationship: string; // Relationship (e.g., friend, family, etc.)
   Description: string; // Additional description (optional)
   Profile_pic: string;
-  Visibility: boolean;
+  Privacy: boolean;
 }
 
 function CustomTabPanel(props: TabPanelProps) {
@@ -332,7 +332,7 @@ const ProfilePage = () => {
   return (
     <>
       {profileData?.id && (
-        <Mymenu uid={profileData.id} checked={profileData.Visibility} />
+        <Mymenu uid={profileData.id} checked={profileData.Privacy} />
       )}
 
       <Container>

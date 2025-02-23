@@ -1,3 +1,4 @@
+import { Visibility } from "@mui/icons-material";
 import axios from "axios";
 import Swal from "sweetalert2";
 export interface profiledata {
@@ -326,5 +327,21 @@ export const deletemedia = async (fname: string) => {
       // For any non-Axios errors
       throw new Error("An unknown error occurred");
     }
+  }
+};
+
+export const changevisibility = async (visibility: boolean) => {
+  try {
+    axios.patch(
+      `${process.env.REACT_APP_SERVER_ENV}/api/profile/visibility`,
+      { Privacy: visibility },
+      { withCredentials: true }
+    );
+  } catch (error) {
+    Swal.fire({
+      icon: "error",
+      title: "Oops..",
+      text: `Couldn't turn visibility ${visibility ? "Private" : "Public"}`,
+    });
   }
 };
