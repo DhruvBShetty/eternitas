@@ -2,12 +2,11 @@ import { SvgIconComponent } from "@mui/icons-material";
 import React from "react";
 
 type icprops = {
-  icon: React.ReactElement;
   text: string;
   url: string;
 };
 
-const Menuwithicon: React.FC<icprops> = ({ icon, text, url }) => {
+const Menuwithicon: React.FC<icprops> = ({ text, url }) => {
   return (
     <a href={url} style={{ color: "white", textDecoration: "none" }}>
       <div
@@ -17,9 +16,9 @@ const Menuwithicon: React.FC<icprops> = ({ icon, text, url }) => {
           flexWrap: "wrap",
           gap: 10,
           fontFamily: "monospace",
+          justifyContent: "center",
         }}
       >
-        {icon}
         {text}
       </div>
     </a>

@@ -1,12 +1,10 @@
 import { slide as Menu } from "react-burger-menu";
-import { Button } from "@mui/material";
-import HomeIcon from "@mui/icons-material/Home";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import { Button, Switch, FormControlLabel } from "@mui/material";
 import axios from "axios";
-import VisibilityIcon from "@mui/icons-material/Visibility";
 import hamburger from "./hamburger.svg";
 import Menuwithicon from "./MenuIcon";
-import CloseIcon from "@mui/icons-material/Close";
+import Toggleopt from "./Toggle";
+import { useState } from "react";
 
 interface menuprops {
   state: boolean;
@@ -39,9 +37,10 @@ async function handlelogout() {
 
 interface Menuprops {
   uid?: number;
+  checked?: boolean;
 }
 
-const Mymenu: React.FC<Menuprops> = ({ uid }) => {
+const Mymenu: React.FC<Menuprops> = ({ uid, checked }) => {
   const pathname: string = window.location.pathname;
 
   // Split the pathname by '/' and get the last segment
@@ -50,6 +49,8 @@ const Mymenu: React.FC<Menuprops> = ({ uid }) => {
   // Capitalize the first letter
   const profile: string =
     lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1);
+
+  const label = { inputProps: { "aria-label": "Switch demo" } };
 
   const styles = {
     bmBurgerButton: {
@@ -75,6 +76,7 @@ const Mymenu: React.FC<Menuprops> = ({ uid }) => {
     bmMenuWrap: {
       position: "fixed",
       height: "100%",
+      textAlign: "center",
     },
     bmMenu: {
       background: "black", //'#373a47',
@@ -101,23 +103,19 @@ const Mymenu: React.FC<Menuprops> = ({ uid }) => {
 
   return (
     <Menu styles={styles} customBurgerIcon={<img src={hamburger} />}>
-      <Menuwithicon icon={<HomeIcon />} text="Acasă" url="/" />
+      <Menuwithicon text="Acasă" url="/" />
+      <br />
+      <Menuwithicon text="Magazin Shopify" url="/" />
       <br />
       <Menuwithicon
-        icon={<AccountCircleIcon />}
-        text={profile == "Profile" ? "Configurare profil" : "Profil"}
+        text={profile == "Profile" ? "Editează Profilul" : "Profil"}
         url={profile == "Profile" ? "/Profilepagesetup" : "/Profile"}
       />
+
       <br />
-      {uid ? (
-        <Menuwithicon
-          icon={<VisibilityIcon />}
-          text="Vizualizare"
-          url={"/profile/" + uid}
-        />
-      ) : (
-        ""
-      )}
+      {uid ? <Menuwithicon text="Vizualizare" url={"/profile/" + uid} /> : ""}
+      <br />
+      {checked !== undefined && <Toggleopt tstate={checked} />}
       <br />
       <br />
       <div>
@@ -131,7 +129,7 @@ const Mymenu: React.FC<Menuprops> = ({ uid }) => {
           }}
         >
           <a id="logout" className="menu-item" onClick={handlelogout}>
-            Logout
+            Log out
           </a>
         </Button>
       </div>

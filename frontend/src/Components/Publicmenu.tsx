@@ -100,7 +100,7 @@ const Publicmenu: React.FC<Menuprops> = ({ uid }) => {
 
   return (
     <Menu styles={styles} customBurgerIcon={<img src={hamburger} />}>
-      <Menuwithicon icon={<HomeIcon />} text="Acasă" url={"/"} />
+      <Menuwithicon text="Acasă" url={"/"} />
     </Menu>
   );
 };
