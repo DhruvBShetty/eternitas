@@ -300,3 +300,31 @@ export const getpublicprofiledata = async (id: number) => {
     }
   }
 };
+
+export const deletemedia = async (fname: string) => {
+  try {
+    await axios.delete(
+      `${process.env.REACT_APP_SERVER_ENV}/api/deletemedia/${fname}`,
+      { withCredentials: true }
+    );
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response && error.response.data) {
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: `${error.response.data.detail}`,
+        });
+      } else if (error?.message) {
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: `${error.message}`,
+        });
+      }
+    } else {
+      // For any non-Axios errors
+      throw new Error("An unknown error occurred");
+    }
+  }
+};

@@ -16,8 +16,16 @@ import {
   Tab,
   createTheme,
   ThemeProvider,
+  Switch,
+  FormControlLabel,
 } from "@mui/material";
-import { getprofiledata, profileupload, mediaupload, getmedia } from "./api";
+import {
+  getprofiledata,
+  profileupload,
+  mediaupload,
+  getmedia,
+  deletemedia,
+} from "./api";
 import { amber, brown, grey } from "@mui/material/colors";
 import Swal from "sweetalert2";
 import Mymenu from "./Components/Menu";
@@ -53,6 +61,7 @@ interface PersonData {
   Relationship: string; // Relationship (e.g., friend, family, etc.)
   Description: string; // Additional description (optional)
   Profile_pic: string;
+  Visibility: boolean;
 }
 
 function CustomTabPanel(props: TabPanelProps) {
@@ -118,7 +127,8 @@ const ProfilePage = () => {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [remsq, setRemsq] = useState(3);
-  const fileInputRef = useRef(null);
+  const [mediarender, setmediarenderState] = useState(true);
+  const [prender, setprenderState] = useState(true);
 
   const style = {
     display: "flex",
@@ -162,7 +172,7 @@ const ProfilePage = () => {
       }
     }
     fetchprofile();
-  }, []);
+  }, [prender]);
 
   useEffect(() => {
     async function getmlinks() {
@@ -179,22 +189,24 @@ const ProfilePage = () => {
       }
     }
     getmlinks();
-  }, []);
+  }, [mediarender]);
 
   const handleProfilePicChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     if (event?.target?.files && profileData) {
-      // setProfilePic(event.target.files[0]);
       const file = event.target.files[0];
       try {
-        await profileupload(file);
+        profileupload(file);
+
         Swal.fire({
           icon: "success",
           title: "Successful",
           text: "Profile picture was updated",
-        }).then(() => {
-          window.location.reload();
+        }).then((result) => {
+          if (result.isConfirmed) {
+            setprenderState(!prender);
+          }
         });
       } catch (error: unknown) {
         Swal.fire({
@@ -217,31 +229,69 @@ const ProfilePage = () => {
         medialinks.map((item) => item.split("/").pop())
       );
 
-      filesArray.forEach((ele) => {
+      const uniquefilesArray = filesArray.filter((ele) => {
         if (mediaset.has(ele.name)) {
-          Swal.fire({
-            icon: "error",
-            title: "Duplicate",
-            text: `Media file with name:${ele.name} already exists`,
-          });
+          return false;
         }
+        return true;
       });
 
-      try {
-        await mediaupload(filesArray);
-        Swal.fire({
-          icon: "success",
-          title: "Successful",
-          text: "Încărcarea fișierelor media a fost realizată cu succes",
-        }).then(() => {
-          window.location.reload();
-        });
-      } catch (error: unknown) {
+      if (uniquefilesArray.length == 0) {
+        const flist = filesArray
+          .map((item) => `<pre>${item.name}</pre>`)
+          .join("");
+
         Swal.fire({
           icon: "error",
-          title: "Error",
-          text: "Media files update failed (will disappear on reload)",
+          title: "Duplicates",
+          html: `Media files with these names already exist:${flist}`,
         });
+      } else if (uniquefilesArray.length < filesArray.length) {
+        const ufnames = uniquefilesArray
+          .map((ele) => `<pre>${ele.name}</pre>`)
+          .join("");
+
+        const dupnames = filesArray
+          .map((ele) => {
+            if (!ufnames.includes(ele.name)) {
+              return `<pre>${ele.name}</pre>`;
+            }
+          })
+          .join("");
+
+        try {
+          await mediaupload(filesArray);
+          Swal.fire({
+            icon: "info",
+            title: "Selecție încărcată",
+            html: `Au fost încărcate doar fișiere cu nume unice <h2>Încărcate</h2>${ufnames} <h2>Duplicat</h2> ${dupnames}`,
+          }).then(() => {
+            setmediarenderState(!mediarender);
+          });
+        } catch (error: unknown) {
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Media files update failed (will disappear on reload)",
+          });
+        }
+      } else {
+        try {
+          await mediaupload(filesArray);
+          Swal.fire({
+            icon: "success",
+            title: "Successful",
+            text: `Încărcarea fișierelor media a fost realizată cu succes`,
+          }).then(() => {
+            setmediarenderState(!mediarender);
+          });
+        } catch (error: unknown) {
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Media files update failed (will disappear on reload)",
+          });
+        }
       }
     }
 
@@ -281,11 +331,11 @@ const ProfilePage = () => {
 
   return (
     <>
-      {profileData?.id && <Mymenu uid={profileData.id} />}
+      {profileData?.id && (
+        <Mymenu uid={profileData.id} checked={profileData.Visibility} />
+      )}
 
-      <Container
-        sx={{ flex: "display", justifyContent: "center", alignItems: "center" }}
-      >
+      <Container>
         <Box sx={{ display: "flex", justifyContent: "center", mb: 4, pt: 3 }}>
           <img src={Logo} alt="Logo" style={{ width: "150px" }} />
         </Box>
@@ -321,7 +371,7 @@ const ProfilePage = () => {
                 >
                   {profileData?.Profile_pic ? (
                     <img
-                      src={pfpic}
+                      src={pfpic + "?t=" + new Date().getTime()}
                       alt="Profile"
                       style={{
                         width: "100%",
@@ -527,6 +577,35 @@ const ProfilePage = () => {
                 maxWidth: "85vw",
               }}
             />
+            <Button
+              variant="contained"
+              onClick={() => {
+                const fname = modalpic.split("/").pop();
+                if (fname !== undefined) {
+                  deletemedia(fname)
+                    .then(() => {
+                      setmediarenderState(!mediarender);
+                    })
+                    .then(() => {
+                      setOpen(false);
+                    });
+                }
+              }}
+              sx={{
+                mb: 1,
+                bgcolor: "black",
+                borderRadius: 3,
+                padding: 1.5,
+                mt: 1,
+                "&:hover": {
+                  color: "#ffca28",
+                },
+              }}
+            >
+              <Typography sx={{ fontWeight: 700 }}>
+                șterge amintirea{" "}
+              </Typography>
+            </Button>
           </Box>
         </Modal>
       </Container>

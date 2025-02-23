@@ -74,6 +74,7 @@ const ProfilePageSetup = () => {
   const [deathDate, setDeathDate] = useState(""); // Add death date state
   const [relationship, setRelationship] = useState("");
   const [description, setDescription] = useState("");
+  const [isFormChanged, setIsFormChanged] = useState(false);
 
   const navigate = useNavigate();
 
@@ -82,20 +83,24 @@ const ProfilePageSetup = () => {
   };
 
   useEffect(() => {
-    getprofiledata().then((res) => {
-      const pdata: PersonData = res?.data ? res.data[0] : undefined;
-      if (pdata !== undefined) {
-        setid(pdata.id);
-        setFirstName(pdata.First_name);
-        setMiddleName(pdata.Middle_name);
-        setLastName(pdata.Last_name);
-        setDob(pdata.Date_of_birth);
-        setDeathDate(pdata.Date_of_death);
-        setRelationship(pdata.Relationship);
-        setDescription(pdata.Description);
-        setProfilesetup(true);
-      }
-    });
+    getprofiledata()
+      .then((res) => {
+        const pdata: PersonData = res?.data ? res.data[0] : undefined;
+        if (pdata !== undefined) {
+          setid(pdata.id);
+          setFirstName(pdata.First_name);
+          setMiddleName(pdata.Middle_name);
+          setLastName(pdata.Last_name);
+          setDob(pdata.Date_of_birth);
+          setDeathDate(pdata.Date_of_death);
+          setRelationship(pdata.Relationship);
+          setDescription(pdata.Description);
+          setProfilesetup(true);
+        }
+      })
+      .then(() => {
+        setIsFormChanged(false);
+      });
   }, []);
 
   const handleSubmit = async () => {
@@ -170,100 +175,128 @@ const ProfilePageSetup = () => {
 
         {displayform && (
           <Box sx={{ padding: 2 }}>
-            <ThemeProvider theme={fieldtheme}>
-              <Typography>Nume</Typography>
-              <TextField
-                variant="outlined"
-                fullWidth
-                required
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                sx={{ mb: 2 }}
-              />
+            <form onSubmit={handleSubmit}>
+              <ThemeProvider theme={fieldtheme}>
+                <Typography>Nume</Typography>
+                <TextField
+                  variant="outlined"
+                  fullWidth
+                  required
+                  value={firstName}
+                  onChange={(e) => {
+                    setFirstName(e.target.value);
+                    setIsFormChanged(true);
+                  }}
+                  sx={{ mb: 2 }}
+                />
 
-              <Typography>AI doilea prenume</Typography>
-              <TextField
-                variant="outlined"
-                fullWidth
-                value={middleName}
-                onChange={(e) => setMiddleName(e.target.value)}
-                sx={{ mb: 2 }}
-              />
+                <Typography>AI doilea prenume</Typography>
+                <TextField
+                  variant="outlined"
+                  fullWidth
+                  value={middleName}
+                  onChange={(e) => {
+                    setMiddleName(e.target.value);
+                    setIsFormChanged(true);
+                  }}
+                  sx={{ mb: 2 }}
+                />
 
-              <Typography>Prenume</Typography>
-              <TextField
-                variant="outlined"
-                fullWidth
-                required
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                sx={{ mb: 2 }}
-              />
+                <Typography>Prenume</Typography>
+                <TextField
+                  variant="outlined"
+                  fullWidth
+                  required
+                  value={lastName}
+                  onChange={(e) => {
+                    setLastName(e.target.value);
+                    setIsFormChanged(true);
+                  }}
+                  sx={{ mb: 2 }}
+                />
 
-              <Typography>Data nașterii</Typography>
-              <TextField
-                variant="outlined"
-                fullWidth
-                type="date"
-                InputLabelProps={{ shrink: true }}
-                value={dob}
-                onChange={(e) => setDob(e.target.value)}
-                sx={{ mb: 2 }}
-              />
+                <Typography>Data nașterii</Typography>
+                <TextField
+                  variant="outlined"
+                  required
+                  fullWidth
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                  value={dob}
+                  onChange={(e) => {
+                    setDob(e.target.value);
+                    setIsFormChanged(true);
+                  }}
+                  sx={{ mb: 2 }}
+                />
 
-              <Typography>Data decesului</Typography>
-              <TextField
-                variant="outlined"
-                fullWidth
-                type="date"
-                InputLabelProps={{ shrink: true }}
-                value={deathDate}
-                onChange={(e) => setDeathDate(e.target.value)}
-                sx={{ mb: 2 }}
-              />
+                <Typography>Data decesului</Typography>
+                <TextField
+                  variant="outlined"
+                  fullWidth
+                  required
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                  value={deathDate}
+                  onChange={(e) => {
+                    setDeathDate(e.target.value);
+                    setIsFormChanged(true);
+                  }}
+                  sx={{ mb: 2 }}
+                />
 
-              <Typography>Relația cu persoana</Typography>
-              <TextField
-                select
-                variant="outlined"
+                <Typography>Relația cu persoana</Typography>
+                <TextField
+                  select
+                  variant="outlined"
+                  fullWidth
+                  required
+                  value={relationship}
+                  onChange={(e) => {
+                    setRelationship(e.target.value);
+                    setIsFormChanged(true);
+                  }}
+                  sx={{ mb: 2 }}
+                >
+                  <MenuItem value="Parent">Parent</MenuItem>
+                  <MenuItem value="Brother">Brother</MenuItem>
+                  <MenuItem value="Sister">Sister</MenuItem>
+                  <MenuItem value="Friend">Friend</MenuItem>
+                  <MenuItem value="Other">Other</MenuItem>
+                </TextField>
+
+                <Typography>Descriere</Typography>
+                <TextField
+                  variant="outlined"
+                  multiline
+                  required
+                  rows={4}
+                  fullWidth
+                  value={description}
+                  onChange={(e) => {
+                    setDescription(e.target.value);
+                    setIsFormChanged(true);
+                  }}
+                  sx={{ mb: 2 }}
+                />
+              </ThemeProvider>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
                 fullWidth
-                value={relationship}
-                onChange={(e) => setRelationship(e.target.value)}
-                sx={{ mb: 2 }}
+                disabled={!isFormChanged}
+                sx={{
+                  mb: 2,
+                  bgcolor: "black",
+                  borderRadius: 3,
+                  padding: 2,
+                  mt: 2,
+                }}
               >
-                <MenuItem value="Parent">Parent</MenuItem>
-                <MenuItem value="Brother">Brother</MenuItem>
-                <MenuItem value="Sister">Sister</MenuItem>
-                <MenuItem value="Friend">Friend</MenuItem>
-                <MenuItem value="Other">Other</MenuItem>
-              </TextField>
-
-              <Typography>Descriere</Typography>
-              <TextField
-                variant="outlined"
-                multiline
-                rows={4}
-                fullWidth
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                sx={{ mb: 2 }}
-              />
-            </ThemeProvider>
-            <Button
-              variant="contained"
-              color="primary"
-              fullWidth
-              onClick={handleSubmit}
-              sx={{
-                mb: 2,
-                bgcolor: "black",
-                borderRadius: 3,
-                padding: 2,
-                mt: 2,
-              }}
-            >
-              <Typography sx={{ fontWeight: 700 }}> Salvează</Typography>
-            </Button>
+                <Typography sx={{ fontWeight: 700 }}> Salvează</Typography>
+              </Button>
+            </form>
           </Box>
         )}
       </Container>

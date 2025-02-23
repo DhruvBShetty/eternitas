@@ -26,7 +26,7 @@ import hashlib
 import base64
 import string
 import random
-
+import botocore
 
 load_dotenv()
 
@@ -52,6 +52,7 @@ app.add_middleware(
     allow_headers=["*"],
     allow_credentials=True
 )
+
 
 class User(BaseModel):
     email: str
@@ -314,9 +315,28 @@ async def profilemedia(id:int):
         file_names = [obj['Key'] for obj in response['Contents']]
         return file_names
     else:   
-        return []        
+        return []    
 
+@app.delete("/api/deletemedia/{fname}",status_code=204)
+async def deletemedia(request:Request,fname:str):
+    print(fname)
+    token=request.cookies.get("Eternitas_session")
+    try:
+        payload=jwt.decode(token,et_key,algorithms=["HS256"])
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=401,detail=str(e))  
+    
+    file_name = str(payload.get("id"))+"/media/"+fname
+    
+    try:
+        s3_client.delete_object(Bucket=aws_bucket,Key=file_name)
+    except botocore.exceptions.ClientError as error:
+    # Put your error handling logic here
+        raise error
 
+    except botocore.exceptions.ParamValidationError as error:
+        raise ValueError('The parameters you provided are incorrect: {}'.format(error))
 
        
      
