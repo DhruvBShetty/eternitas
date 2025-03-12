@@ -103,7 +103,8 @@ const ProfilePageSetup = () => {
       });
   }, []);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     const profileData = {
       profileType,
       firstName,
@@ -116,9 +117,13 @@ const ProfilePageSetup = () => {
     };
     // Navigate to ProfilePage and pass profileData as state
     try {
-      await profilesubmit(profileData).then(() => {
+      if (isFormChanged) {
+        await profilesubmit(profileData).then(() => {
+          navigate("/profile");
+        });
+      } else {
         navigate("/profile");
-      });
+      }
     } catch (error) {
       Swal.fire({
         icon: "error",
@@ -153,24 +158,26 @@ const ProfilePageSetup = () => {
           <Button
             variant="contained"
             color={profileType === "Human" ? "primary" : "inherit"}
-            onClick={() => setForm(!displayform)}
+            onClick={() => {
+              setForm(!displayform);
+              if (displayform) {
+                navigate("/profile");
+              }
+            }}
             sx={{ borderRadius: 5 }}
           >
             {profilesetup ? (
-              <p>
-                Editează {firstName} {lastName}
-              </p>
+              displayform === true ? (
+                <p>Anulează modificările</p>
+              ) : (
+                <p>
+                  Editează {firstName} {lastName}
+                </p>
+              )
             ) : (
               <p>Set up profile</p>
             )}
           </Button>
-          {/* <Button
-                    variant="contained"
-                    color={profileType === "Animal" ? "primary" : "inherit"}
-                    onClick={() => handleProfileType("Animal")}
-                >
-                    Animal
-                </Button> */}
         </Box>
 
         {displayform && (
@@ -285,7 +292,6 @@ const ProfilePageSetup = () => {
                 variant="contained"
                 color="primary"
                 fullWidth
-                disabled={!isFormChanged}
                 sx={{
                   mb: 2,
                   bgcolor: "black",

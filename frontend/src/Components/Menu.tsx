@@ -5,6 +5,7 @@ import hamburger from "./hamburger.svg";
 import Menuwithicon from "./MenuIcon";
 import Toggleopt from "./Toggle";
 import { useState } from "react";
+import Swal from "sweetalert2";
 
 interface menuprops {
   state: boolean;
@@ -51,6 +52,7 @@ const Mymenu: React.FC<Menuprops> = ({ uid, checked }) => {
     lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1);
 
   const label = { inputProps: { "aria-label": "Switch demo" } };
+  const [password, setPassword] = useState<string>("");
 
   const styles = {
     bmBurgerButton: {
@@ -90,11 +92,11 @@ const Mymenu: React.FC<Menuprops> = ({ uid, checked }) => {
     bmItemList: {
       color: "#b8b7ad",
       padding: "0.8em",
+      fontWeight: "650",
     },
     bmItem: {
       display: "inline-block",
       color: "white",
-      fontFamily: "Futura",
     },
     bmOverlay: {
       background: "rgba(0, 0, 0, 0.3)",
@@ -103,29 +105,36 @@ const Mymenu: React.FC<Menuprops> = ({ uid, checked }) => {
 
   return (
     <Menu styles={styles} customBurgerIcon={<img src={hamburger} />}>
-      <Menuwithicon text="Acasă" url="/" />
-      <br />
-      <Menuwithicon text="Magazin Shopify" url="/" />
-      <br />
-      <Menuwithicon
-        text={profile == "Profile" ? "Editează Profilul" : "Profil"}
-        url={profile == "Profile" ? "/Profilepagesetup" : "/Profile"}
-      />
+      {/* <Menuwithicon text="Acasă" url="/" />
+      <br /> */}
+      <Menuwithicon text="Magazin" url="https://eternitas-shop.ro/" />
+
+      {profile == "Profile" && (
+        <>
+          <br />
+          <Menuwithicon text="Editează Profilul" url="/Profilepagesetup" />
+        </>
+      )}
 
       <br />
-      {uid ? <Menuwithicon text="Vizualizare" url={"/profile/" + uid} /> : ""}
-      <br />
+      {/* {uid ? <Menuwithicon text="Vizualizare" url={"/profile/" + uid} /> : ""} */}
+      {lastSegment.toLowerCase() !== "profilepagesetup" ? (
+        <Menuwithicon text="Cautare Profil" url="/cautare" />
+      ) : (
+        ""
+      )}
+
       {checked !== undefined && <Toggleopt tstate={checked} />}
-      <br />
-      <br />
       <div>
         <Button
           variant="outlined"
           component="label"
           sx={{
+            borderColor: "white",
             color: "white",
             fontFamily: "monospace",
             "&:hover": { borderColor: "#ffca28" },
+            borderRadius: 1,
           }}
         >
           <a id="logout" className="menu-item" onClick={handlelogout}>

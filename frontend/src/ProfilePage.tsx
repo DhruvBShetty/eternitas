@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import square from "./Components/emptysquare.png";
 import AddIcon from "@mui/icons-material/Add";
+import PlayCircleIcon from "@mui/icons-material/PlayCircle";
 import {
   Container,
   Typography,
@@ -30,9 +31,15 @@ import { amber, brown, grey } from "@mui/material/colors";
 import Swal from "sweetalert2";
 import Mymenu from "./Components/Menu";
 import Modal from "@mui/material/Modal";
-import DeleteIcon from "@mui/icons-material/Delete";
 import Logo from "./logo.png";
 import Namecomp from "./Components/Namecomp";
+import SetPasswordForm from "./Components/SetPassword";
+
+type SetPassword = {
+  password: string;
+};
+
+let passwordInput: HTMLInputElement;
 
 const theme = createTheme({
   palette: {
@@ -74,6 +81,7 @@ function CustomTabPanel(props: TabPanelProps) {
       id={`simple-tabpanel-${index}`}
       aria-labelledby={`simple-tab-${index}`}
       {...other}
+      style={{ textAlign: "justify" }}
     >
       {value === index && <Box sx={{ mt: 3 }}>{children}</Box>}
     </div>
@@ -129,6 +137,12 @@ const ProfilePage = () => {
   const [remsq, setRemsq] = useState(3);
   const [mediarender, setmediarenderState] = useState(true);
   const [prender, setprenderState] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
+
+  const handleImageLoad = () => {
+    setIsImageLoaded(true); // Mark image as loaded
+  };
 
   const style = {
     display: "flex",
@@ -169,6 +183,8 @@ const ProfilePage = () => {
           title: "Oops...",
           text: "Profile couldn't be fetched",
         });
+      } finally {
+        setLoading(false);
       }
     }
     fetchprofile();
@@ -198,21 +214,22 @@ const ProfilePage = () => {
       const file = event.target.files[0];
       try {
         profileupload(file);
+        console.log(file.name);
 
         Swal.fire({
           icon: "success",
           title: "Successful",
-          text: "Profile picture was updated",
+          text: "Imaginea de profil a fost actualizată.",
         }).then((result) => {
           if (result.isConfirmed) {
-            setprenderState(!prender);
+            setPfpic(URL.createObjectURL(file));
           }
         });
       } catch (error: unknown) {
         Swal.fire({
           icon: "error",
           title: "Error",
-          text: "Profile picture update failed (will disappear on reload)",
+          text: "Actualizarea imaginii de profil a eșuat.",
         });
       }
     }
@@ -329,199 +346,202 @@ const ProfilePage = () => {
     }
   };
 
-  return (
-    <>
-      {profileData?.id && (
-        <Mymenu uid={profileData.id} checked={profileData.Privacy} />
-      )}
+  if (loading) {
+    return <div className="loader">Loading...</div>;
+  } else {
+    return (
+      <>
+        {profileData?.id && (
+          <Mymenu uid={profileData.id} checked={profileData.Privacy} />
+        )}
 
-      <Container>
-        <Box sx={{ display: "flex", justifyContent: "center", mb: 4, pt: 3 }}>
-          <img src={Logo} alt="Logo" style={{ width: "150px" }} />
-        </Box>
+        <Container>
+          <Box sx={{ display: "flex", justifyContent: "center", mb: 4, pt: 3 }}>
+            <img src={Logo} alt="Logo" style={{ width: "150px" }} />
+          </Box>
 
-        <ThemeProvider theme={theme}>
-          <Box sx={{ textAlign: "center", mt: 3 }}>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                flexDirection: "column",
-              }}
-            >
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleProfilePicChange}
-                style={{ display: "none" }}
-                id="profile-pic-upload"
-              />
-              <label htmlFor="profile-pic-upload">
-                <Avatar
-                  sx={{
-                    width: 170,
-                    height: 170,
-                    bgcolor: "secondary",
-                    cursor: "pointer",
-                    position: "relative",
-                    marginTop: 1,
-                    "&:hover": { opacity: 0.8 },
-                  }}
-                >
-                  {profileData?.Profile_pic ? (
+          <ThemeProvider theme={theme}>
+            <Box sx={{ textAlign: "center", mt: 3 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  flexDirection: "column",
+                }}
+              >
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfilePicChange}
+                  style={{ display: "none" }}
+                  id="profile-pic-upload"
+                />
+                <label htmlFor="profile-pic-upload">
+                  <Avatar
+                    sx={{
+                      width: 170,
+                      height: 170,
+                      bgcolor: "white",
+                      cursor: "pointer",
+                      position: "relative",
+                      marginTop: 1,
+                      "&:hover": { opacity: 0.8 },
+                    }}
+                  >
+                    {!isImageLoaded && (
+                      <CircularProgress style={{ color: "#ffca28" }} />
+                    )}
                     <img
-                      src={pfpic + "?t=" + new Date().getTime()}
+                      src={pfpic}
                       alt="Profile"
                       style={{
                         width: "100%",
                         height: "100%",
                         borderRadius: "50%",
                         objectFit: "cover",
+                        display: isImageLoaded ? "flex" : "none",
                       }}
-                      onError={() => {
+                      onLoad={() => {
+                        setIsImageLoaded(true);
+                      }}
+                      onError={() =>
                         setPfpic(
                           `${process.env.PUBLIC_URL}/defaultprofile.jfif`
-                        );
-                      }}
+                        )
+                      }
                     />
-                  ) : (
-                    <Typography variant="h6" color="white">
-                      INCARCA
+                  </Avatar>
+                </label>
+              </Box>
+
+              {profileData ? (
+                <Box sx={{ mt: 3 }}>
+                  <Namecomp
+                    first_name={profileData.First_name}
+                    middle_name={profileData.Middle_name}
+                    last_name={profileData.Last_name}
+                    fweight={700}
+                    fsize="20px"
+                  />
+
+                  {profileData.Date_of_death && profileData.Date_of_birth && (
+                    <Typography
+                      sx={{ fontFamily: "Times New Roman", fontWeight: 700 }}
+                    >
+                      <p></p>
+                      {new Date(profileData.Date_of_birth).toLocaleDateString(
+                        "ro-RO"
+                      )}{" "}
+                      -{" "}
+                      {new Date(profileData.Date_of_death).toLocaleDateString(
+                        "ro-RO"
+                      )}
                     </Typography>
                   )}
-                </Avatar>
-              </label>
+
+                  {profileData.Date_of_death && (
+                    <Typography
+                      sx={{ fontFamily: "Times New Roman", fontWeight: 700 }}
+                    >
+                      Vârstă:{" "}
+                      {calculateAge(
+                        profileData.Date_of_birth,
+                        profileData.Date_of_death
+                      )}{" "}
+                      ani
+                    </Typography>
+                  )}
+                </Box>
+              ) : (
+                <Typography>No profile information provided.</Typography>
+              )}
             </Box>
 
-            {profileData ? (
-              <Box sx={{ mt: 3 }}>
-                <Namecomp
-                  first_name={profileData.First_name}
-                  middle_name={profileData.Middle_name}
-                  last_name={profileData.Last_name}
-                  fweight={700}
-                  fsize="20px"
-                />
-
-                {profileData.Date_of_death && profileData.Date_of_birth && (
-                  <Typography
-                    sx={{ fontFamily: "Times New Roman", fontWeight: 700 }}
-                  >
-                    <p></p>
-                    {new Date(profileData.Date_of_birth).toLocaleDateString(
-                      "ro-RO"
-                    )}{" "}
-                    -{" "}
-                    {new Date(profileData.Date_of_death).toLocaleDateString(
-                      "ro-RO"
-                    )}
-                  </Typography>
-                )}
-
-                {profileData.Date_of_death && (
-                  <Typography
-                    sx={{ fontFamily: "Times New Roman", fontWeight: 700 }}
-                  >
-                    Vârstă:{" "}
-                    {calculateAge(
-                      profileData.Date_of_birth,
-                      profileData.Date_of_death
-                    )}{" "}
-                    ani
-                  </Typography>
-                )}
+            <Box sx={{ p: 2 }}>
+              <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+                <Tabs
+                  value={value}
+                  onChange={handleChange}
+                  aria-label="basic tabs example"
+                  variant="fullWidth"
+                  textColor="primary"
+                >
+                  <Tab label="Despre" {...a11yProps(0)} />
+                  <Tab label="Media" {...a11yProps(1)} />
+                </Tabs>
               </Box>
-            ) : (
-              <Typography>No profile information provided.</Typography>
-            )}
-          </Box>
-
-          <Box sx={{ p: 2 }}>
-            <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-              <Tabs
-                value={value}
-                onChange={handleChange}
-                aria-label="basic tabs example"
-                variant="fullWidth"
-                textColor="primary"
-              >
-                <Tab label="Despre" {...a11yProps(0)} />
-                <Tab label="Media" {...a11yProps(1)} />
-              </Tabs>
-            </Box>
-            <CustomTabPanel value={value} index={0}>
-              {`${profileData?.Description ? profileData.Description : ""}`}
-            </CustomTabPanel>
-            <CustomTabPanel value={value} index={1}>
-              {/* <Button component="label">
-                Incarca amintiri
-                <input
-                  type="file"
-                  onChange={handleMediaChange}
-                  hidden
-                  multiple
-                  accept="image/*,video/*"
-                />
-              </Button> */}
-
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(3, 1fr)",
-                  justifyContent: "space-between",
-                  gap: 1.5,
-                }}
-              >
-                {medialinks.map((file, index) => (
-                  <Box>
-                    {imageExtensions.some((ext) =>
-                      file.toLowerCase().endsWith(ext)
-                    ) ? (
-                      <img
-                        src={imglink + file}
-                        onClick={() => {
-                          setmodalpic(imglink + file);
-                          handleOpen();
-                        }}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          aspectRatio: 1 / 1,
-                          objectFit: "cover",
-                        }}
-                        title={file.split("/").pop()}
-                      />
-                    ) : videoExtensions.some((ext) =>
+              <CustomTabPanel value={value} index={0}>
+                {`${profileData?.Description ? profileData.Description : ""}`}
+              </CustomTabPanel>
+              <CustomTabPanel value={value} index={1}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3, 1fr)",
+                    justifyContent: "space-between",
+                    gap: 1.5,
+                  }}
+                >
+                  {medialinks.map((file, index) => (
+                    <Box>
+                      {imageExtensions.some((ext) =>
                         file.toLowerCase().endsWith(ext)
                       ) ? (
-                      <video
-                        title={file.split("/").pop()}
-                        controls
-                        ref={videoRef}
-                        onPlay={handleFullscreen}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          aspectRatio: 1 / 1,
-                          objectFit: "cover",
-                        }}
-                      >
-                        <source
+                        <img
                           src={imglink + file}
-                          type={"video/" + file.split(".").pop()}
+                          onClick={() => {
+                            setmodalpic(imglink + file);
+                            handleOpen();
+                          }}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            aspectRatio: 1 / 1,
+                            objectFit: "cover",
+                          }}
+                          title={file.split("/").pop()}
                         />
-                        Your browser does not support the video tag.
-                      </video>
-                    ) : (
-                      <Typography variant="body2" sx={{ marginRight: 2 }}>
-                        {file}
-                      </Typography>
-                    )}
-                  </Box>
-                ))}
+                      ) : videoExtensions.some((ext) =>
+                          file.toLowerCase().endsWith(ext)
+                        ) ? (
+                        <video
+                          title={file.split("/").pop()}
+                          controls
+                          controlsList="nofullscreen novolume"
+                          ref={videoRef}
+                          muted
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            aspectRatio: 1 / 1,
+                            objectFit: "cover",
+                          }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setmodalpic(imglink + file);
+                            handleOpen();
+                          }}
+                          onPlay={(e) => {
+                            videoRef.current?.pause();
+                            setmodalpic(imglink + file);
+                            handleOpen();
+                          }}
+                        >
+                          <source
+                            src={imglink + file}
+                            type={"video/" + file.split(".").pop()}
+                          />
+                          Your browser does not support the video tag.
+                        </video>
+                      ) : (
+                        <Typography variant="body2" sx={{ marginRight: 2 }}>
+                          {file}
+                        </Typography>
+                      )}
+                    </Box>
+                  ))}
 
-                {Array.from({ length: remsq }).map(() => (
                   <Box
                     sx={{
                       position: "relative",
@@ -557,59 +577,94 @@ const ProfilePage = () => {
                       />
                     </Button>
                   </Box>
-                ))}
-              </Box>
-            </CustomTabPanel>
-          </Box>
-        </ThemeProvider>
-        <Modal
-          open={open}
-          onClose={handleClose}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
-        >
-          <Box sx={style} className="modalContent">
-            <img
-              src={modalpic}
-              style={{
-                objectFit: "contain",
-                maxHeight: "85vh",
-                maxWidth: "85vw",
-              }}
-            />
-            <Button
-              variant="contained"
-              onClick={() => {
-                const fname = modalpic.split("/").pop();
-                if (fname !== undefined) {
-                  deletemedia(fname)
-                    .then(() => {
-                      setmediarenderState(!mediarender);
-                    })
-                    .then(() => {
-                      setOpen(false);
-                    });
-                }
-              }}
-              sx={{
-                mb: 1,
-                bgcolor: "black",
-                borderRadius: 3,
-                padding: 1.5,
-                mt: 1,
-                "&:hover": {
-                  color: "#ffca28",
-                },
-              }}
-            >
-              <Typography sx={{ fontWeight: 700 }}>
-                șterge amintirea{" "}
-              </Typography>
-            </Button>
-          </Box>
-        </Modal>
-      </Container>
-    </>
-  );
+                </Box>
+              </CustomTabPanel>
+            </Box>
+          </ThemeProvider>
+          <Modal
+            open={open}
+            onClose={handleClose}
+            aria-labelledby="modal-modal-title"
+            aria-describedby="modal-modal-description"
+          >
+            <Box sx={style} className="modalContent">
+              {imageExtensions.some((ext) =>
+                modalpic.toLowerCase().endsWith(ext)
+              ) ? (
+                <img
+                  src={modalpic}
+                  style={{
+                    objectFit: "contain",
+                    maxHeight: "90vh",
+                    maxWidth: "90vw",
+                  }}
+                />
+              ) : videoExtensions.some((ext) =>
+                  modalpic.toLowerCase().endsWith(ext)
+                ) ? (
+                <video
+                  autoPlay
+                  muted
+                  title={modalpic.split("/").pop()}
+                  controls
+                  style={{
+                    maxWidth: "85vw",
+                    maxHeight: "85vh",
+                    objectFit: "cover",
+                  }}
+                >
+                  <source
+                    src={modalpic}
+                    type={"video/" + modalpic.split(".").pop()}
+                  />
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                ""
+              )}
+
+              {/* <img
+                src={modalpic}
+                style={{
+                  objectFit: "contain",
+                  maxHeight: "80vh",
+                  maxWidth: "80vw",
+                }}
+              /> */}
+              <Button
+                variant="contained"
+                onClick={() => {
+                  const fname = modalpic.split("/").pop();
+                  if (fname !== undefined) {
+                    deletemedia(fname)
+                      .then(() => {
+                        setmediarenderState(!mediarender);
+                      })
+                      .then(() => {
+                        setOpen(false);
+                      });
+                  }
+                }}
+                sx={{
+                  mb: 1,
+                  bgcolor: "black",
+                  borderRadius: 3,
+                  padding: 1.5,
+                  mt: 1,
+                  "&:hover": {
+                    color: "#ffca28",
+                  },
+                }}
+              >
+                <Typography sx={{ fontWeight: 700 }}>
+                  șterge amintirea{" "}
+                </Typography>
+              </Button>
+            </Box>
+          </Modal>
+        </Container>
+      </>
+    );
+  }
 };
 export default ProfilePage;

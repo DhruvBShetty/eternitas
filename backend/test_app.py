@@ -56,10 +56,10 @@ def test_verify_cookie():
 
 def test_set_cookie():
     
-    uid:int=3
+    uid:int=2
         
     guest_id=uuid.uuid4()
-    payload={"anon_id":str(guest_id),"Pages":"[2,26]"}
+    payload={"anon_id":str(guest_id),"Pages":"[26]"}
     token=jwt.encode(payload,et_key,algorithm="HS256")
     client.cookies.set(name="Eternitas_pages",value=token)
 
@@ -79,6 +79,51 @@ def test_set_cookie():
         assert True
     else:
         assert False
+
+def test_set_cookie_withpass():
+    
+    uid:int=2
+    uid2:int=3
+        
+    guest_id=uuid.uuid4()
+    payload={"anon_id":str(guest_id),"Pages":"[26]"}
+    token=jwt.encode(payload,et_key,algorithm="HS256")
+    client.cookies.set(name="Eternitas_pages",value=token)
+
+    response = client.post("/api/setpcookie", json={"uid":uid,"password":"password"})
+
+    token=response.cookies["Eternitas_pages"]
+    try:
+        payload=jwt.decode(token,et_key,algorithms=["HS256"])
+    except Exception as e:
+        raise HTTPException(status_code=401,detail=str(e))
+    
+    pages_list = json.loads(payload.get('Pages'))
+
+    if uid in pages_list:
+        assert True
+    else:
+        assert False
+    
+    response2 = client.post("/api/setpcookie",json={"uid":uid2,"password":"pass"})
+
+    assert response2.status_code==401
+
+
+def test_public_profdata():
+
+    uid:int=2
+        
+    guest_id=uuid.uuid4()
+    payload={"id":uid}
+    token=jwt.encode(payload,et_key,algorithm="HS256")
+    
+    client.cookies.set(name="Eternitas_session",value=token)
+
+    response=client.post("/api/profiledata/2")
+
+    print(response.json())
+
 
 
 

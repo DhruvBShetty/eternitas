@@ -21,6 +21,7 @@ import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { loginUser } from "./api";
 import Logo from "./logo.png";
 import { AuthContext } from "./Auth/Auth";
+import SearchIcon from "@mui/icons-material/Search";
 
 const fieldtheme = createTheme({
   components: {
@@ -245,6 +246,22 @@ const LoginPage = () => {
               }}
             >
               Forgot password?
+            </Link>
+          </Grid2>
+          <Grid2>
+            <Link
+              component={RouterLink}
+              to="/cautare"
+              sx={{
+                color: "#212121",
+                textDecoration: "none",
+                "&:hover": { color: "#ffca28" },
+              }}
+            >
+              <div style={{ display: "flex" }}>
+                Cauta un profil
+                <SearchIcon fontSize="small" />
+              </div>
             </Link>
           </Grid2>
         </Grid2>

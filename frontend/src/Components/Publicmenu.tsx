@@ -50,6 +50,8 @@ const Publicmenu: React.FC<Menuprops> = ({ uid }) => {
   const profile: string =
     lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1);
 
+  console.log(lastSegment);
+
   const styles = {
     bmBurgerButton: {
       position: "absolute",
@@ -87,11 +89,11 @@ const Publicmenu: React.FC<Menuprops> = ({ uid }) => {
     bmItemList: {
       color: "#b8b7ad",
       padding: "0.8em",
+      fontWeight: "650",
     },
     bmItem: {
       display: "inline-block",
       color: "white",
-      fontFamily: "Futura",
     },
     bmOverlay: {
       background: "rgba(0, 0, 0, 0.3)",
@@ -100,7 +102,15 @@ const Publicmenu: React.FC<Menuprops> = ({ uid }) => {
 
   return (
     <Menu styles={styles} customBurgerIcon={<img src={hamburger} />}>
-      <Menuwithicon text="Acasă" url={"/"} />
+      <Menuwithicon text="Magazin" url="https://eternitas-shop.ro/" />
+      <br />
+      <Menuwithicon text="Conectează-te" url="/login" />
+      <br />
+      {lastSegment.toLowerCase() !== "cautare" ? (
+        <Menuwithicon text="Cautare Profil" url="/cautare" />
+      ) : (
+        ""
+      )}
     </Menu>
   );
 };

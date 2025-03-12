@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends,Request,Response,File,UploadFile,Cookie
+from fastapi import FastAPI, HTTPException, Depends,Request,Response,File,UploadFile,Cookie,Body
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -27,6 +27,7 @@ import base64
 import string
 import random
 import botocore
+import psycopg2
 from uuid import UUID
 
 load_dotenv()
@@ -72,29 +73,63 @@ def generate_password(length=12):
     characters = string.ascii_letters + string.digits + string.punctuation
     return ''.join(random.choice(characters) for _ in range(length))
 
-# def verify_cookie(Pages:str=Cookie(None)):
-#     try:
-#         memo_info=supabase.table("Memorial_info").select("id,First_name,Middle_name,Last_name,Date_of_birth,Date_of_death,Relationship,Description,Profile_pic,Privacy").eq("id",id).execute()
-    
-#     except APIError as e:
-#         raise HTTPException(status_code=400, detail=e.details)
 
-#     load_data=json.load(memo_info)
-#     print(load_data)
-
-def checkpassword(password:str,id:int):
+def checkpassword(password:str = Body(...),uid:int = Body(...)):
     try:
-        memo_info=supabase.table("Memorial_info").select("Pagepassword")
+        memo_info=supabase.table("Memorial_info").select("Pagepassword").eq("id",uid).execute()
     except APIError as e:
-        raise HTTPException(status_code=400, detail=e.details).eq("id",id).execute()
+        raise HTTPException(status_code=400, detail=e.details)
     
-    Pagepass=memo_info.data[0]["Pagepassword"]
-
-    return Pagepass==password
-  
+    if(memo_info.data==[]):
+        return False
+    
+    mypass=memo_info.data[0].get("Pagepassword",False)
 
     
+    Pagepass:bytes=base64.b64decode(mypass)
+    passwordbytes:bytes=password.encode('utf-8')
 
+    return bcrypt.checkpw(passwordbytes,Pagepass)
+
+def allowview(id:int,Eternitas_pages:str = Cookie(None),Eternitas_session:str=Cookie(None)):
+
+    try:
+        memo_info=supabase.table("Memorial_info").select("Privacy").eq("id",id).execute()
+    except APIError as e:
+        raise HTTPException(status_code=400, detail=e.details)
+    
+    if(memo_info.data==[]):
+        return False
+    
+    if(memo_info.data[0]["Privacy"]==False):
+        return True
+    
+    if Eternitas_session is not None:
+        try:
+            payl=jwt.decode(Eternitas_session,et_key,algorithms=["HS256"])
+            theid=payl.get("id")
+            if(theid==id):
+                return True
+        except Exception as e:
+            pass
+    
+    if Eternitas_pages is not None:
+        try:
+            payload=jwt.decode(Eternitas_pages,et_key,algorithms=["HS256"])
+        except Exception as e:
+            return False
+        
+        if(payload.get('Pages',"No available Pages")=="No available Pages" or payload.get('anon_id',"No anon id")=="No anon id"):
+            return False
+        
+        pages_list = json.loads(payload.get('Pages'))
+
+        if id in pages_list:
+            return True
+        else:
+            return False
+    
+    
 @app.get("/")
 async def home():
     return {"message": "Welcome to Eternitas"}
@@ -166,11 +201,11 @@ async def login(user:User,request:Response):
     remember_for=5
 
     if(user.remember):
-        remember_for=2000
+        remember_for=20160
  
     payload={"email":user.email,"id":myuser.data[0].get("id"),"exp": datetime.now(timezone.utc) + timedelta(minutes=remember_for)}
     token=jwt.encode(payload,et_key,algorithm="HS256")
-    request.set_cookie(key="Eternitas_session",value=token,httponly=True,samesite="Strict")
+    request.set_cookie(key="Eternitas_session",value=token,httponly=True,samesite="Strict",expires=datetime.now(timezone.utc) + timedelta(minutes=remember_for))
     
 
 @app.post("/api/forgotpassword")
@@ -181,13 +216,14 @@ async def forgotpassword(email:Email):
         raise HTTPException(status_code=e.status, detail=e.message)
     
 @app.post("/api/getsession")
-async def getsession(request:Request):
+async def getsession(request:Request,response:Response):
     token=request.cookies.get("Eternitas_session")
     
     try:
         payload=jwt.decode(token,et_key,algorithms=["HS256"])
         return {"isAuthenticated":True}
     except Exception:
+        response.delete_cookie("Eternitas_session")
         return {"isAuthenticated":False}
 
 @app.post("/api/updatepassword")
@@ -236,11 +272,12 @@ async def logout(request:Response):
     
               
 @app.get("/api/editprofile")
-async def editprofile(request:Request):
+async def editprofile(request:Request,response:Response):
         token=request.cookies.get("Eternitas_session")
         try:
             payload=jwt.decode(token,et_key,algorithms=["HS256"])
         except Exception as e:
+            response.delete_cookie("Eternitas_session")
             raise HTTPException(status_code=401,detail=str(e))
             
         try:
@@ -256,12 +293,21 @@ async def editprofile(request:Request):
 
         
 @app.post("/api/uploadpic")
-async def uploadpic(request:Request,file: UploadFile = File(...)):
+def uploadpic(request:Request,file: UploadFile = File(...)):
     token=request.cookies.get("Eternitas_session")
     try:
         payload=jwt.decode(token,et_key,algorithms=["HS256"])
     except Exception as e:
         raise HTTPException(status_code=401,detail=str(e))
+    
+    timestamp = int(datetime.now(timezone.utc).timestamp() * 1000)
+
+    try:
+        pfpstring=str(payload.get("id"))+f"/profilepic?t={timestamp}"
+        memo_info=supabase.table("Memorial_info").update({"Profile_pic":pfpstring}).eq("id",payload.get("id")).execute()
+    except APIError as e:
+        print(e)
+        raise HTTPException(status_code=503, detail=e.details)
 
     new_fname=str(payload.get("id"))+"/"+"profilepic"
     try:
@@ -319,27 +365,32 @@ async def getmedia(request:Request):
         return []        
 
 @app.post("/api/profiledata/{id}")
-async def profiledata(id:int):
-    try:
-        memo_info=supabase.table("Memorial_info").select("id,First_name,Middle_name,Last_name,Date_of_birth,Date_of_death,Relationship,Description,Profile_pic,Privacy").eq("id",id).execute()
-        return memo_info
-    except APIError as e:
-        raise HTTPException(status_code=400, detail=e.details)
+def profiledata(id:int,view:bool=Depends(allowview)):
+    if view:
+        try:
+            memo_info=supabase.table("Memorial_info").select("id,First_name,Middle_name,Last_name,Date_of_birth,Date_of_death,Relationship,Description,Profile_pic,Privacy").eq("id",id).execute()
+            return memo_info
+        except APIError as e:
+            raise HTTPException(status_code=400, detail=e.details)
+    
+    return {"data":[]}
     
 
 @app.post("/api/profilemedia/{id}")
-async def profilemedia(id:int):
-    folder_prefix=str(id)+'/media/'
+def profilemedia(id:int,view:bool=Depends(allowview)):
+    if view:
+        folder_prefix=str(id)+'/media/'
 
-    response = s3_client.list_objects_v2(Bucket=aws_bucket, Prefix=folder_prefix)
+        response = s3_client.list_objects_v2(Bucket=aws_bucket, Prefix=folder_prefix)
 
-    # Check if there are any objects in the folder
-    if 'Contents' in response:
-        # Extract the file names (keys)
-        file_names = [obj['Key'] for obj in response['Contents']]
-        return file_names
-    else:   
-        return []    
+        # Check if there are any objects in the folder
+        if 'Contents' in response:
+            # Extract the file names (keys)
+            file_names = [obj['Key'] for obj in response['Contents']]
+            return file_names
+        else:   
+            return []   
+    return [] 
 
 @app.delete("/api/deletemedia/{fname}",status_code=204)
 async def deletemedia(request:Request,fname:str):
@@ -374,11 +425,12 @@ async def update_profile_visibility(request:Request):
     data = await request.json()
     try:
         Privacy=data.get("Privacy")
-        pword=data.get("Pagepassword").encode('utf-8')
+        pword=data.get("Pagepassword")
         if(Privacy==True and len(pword)>0):
-            salt=bcrypt.gensalt(rounds=8)
-            hash=str(bcrypt.hashpw(pword,salt))
-            myuser = supabase.table("Memorial_info").update({"Privacy":Privacy,"Pagepassword":hash}).eq("id",payload.get("id")).execute()
+            salt=bcrypt.gensalt()
+            hash=bcrypt.hashpw(pword.encode('utf-8'),salt)
+            hashp = base64.b64encode(hash).decode('utf-8')
+            myuser = supabase.table("Memorial_info").update({"Privacy":Privacy,"Pagepassword":hashp}).eq("id",payload.get("id")).execute()
         else:
             myuser = supabase.table("Memorial_info").update({"Privacy":Privacy}).eq("id",payload.get("id")).execute()
 
@@ -387,9 +439,9 @@ async def update_profile_visibility(request:Request):
     
 
 @app.get("/api/publicuserdata")
-async def fetch_public_user():
+def fetch_public_user(response: Response):
     try:
-        userdata = supabase.table("Memorial_info").select("id,First_name,Middle_name,Last_name,Privacy").execute()
+        userdata = supabase.table("Memorial_info").select("id,First_name,Middle_name,Last_name,Profile_pic,Privacy").execute()
         return userdata.data
     
     except APIError as e:
@@ -400,10 +452,20 @@ async def fetch_public_user():
 
 @app.post("/api/verifycookie")
 async def verifyp(request:Request):
-
-    token=request.cookies.get("Eternitas_pages")
+    
+    orig=request.cookies.get("Eternitas_session")
     data = await request.json()
 
+    try:
+        origpayload=jwt.decode(orig,et_key,algorithms=["HS256"])
+        if(origpayload.get("id")==data.get("uid")):
+            return {"message": "Token is valid"}
+        
+    except Exception as e:
+        pass
+    
+    token=request.cookies.get("Eternitas_pages")
+    
     try:
         payload=jwt.decode(token,et_key,algorithms=["HS256"])
     except Exception as e:
@@ -415,35 +477,43 @@ async def verifyp(request:Request):
 
     gid=payload.get('anon_id')
 
-
     if username_id in pages_list:
         return {"message": "Token is valid","id":gid}
+    else:
+        raise HTTPException(status_code=401) 
 
 
 @app.post("/api/setpcookie")
-async def setpcookie(request:Request,response:Response):#verified:bool=Depends(checkpassword)):
-    token=request.cookies.get("Eternitas_pages")
-    data = await request.json()
-    usernameid=data.get("uid")
+async def setpcookie(request:Request,response:Response,verified:bool=Depends(checkpassword)):
 
-    if(token is None):
-        guest_id=uuid.uuid4()
-        payload={"anon_id":str(guest_id),"Pages":f"[{usernameid}]"}
-    else:
-        try:
-            payload=jwt.decode(token,et_key,algorithms=["HS256"])
-        except Exception as e:
-            raise HTTPException(status_code=401,detail=str(e))
+    if verified:
+        token=request.cookies.get("Eternitas_pages")
+        data = await request.json()
+        usernameid=data.get("uid")
+
+        if(token is None):
+            guest_id=uuid.uuid4()
+            payload={"anon_id":str(guest_id),"Pages":f"[{usernameid}]"}
+        else:
+            try:
+                payload=jwt.decode(token,et_key,algorithms=["HS256"])
+            except Exception as e:
+                raise HTTPException(status_code=401,detail=str(e))
+            
+            anon_id=payload.get('anon_id')
+            pages_list = json.loads(payload.get('Pages'))
+            pages_list.append(usernameid)
+
+            payload={"anon_id":anon_id,"Pages":f"{pages_list}"}
+
         
-        anon_id=payload.get('anon_id')
-        pages_list = json.loads(payload.get('Pages'))
-        pages_list.append(usernameid)
-
-        payload={"anon_id":anon_id,"Pages":f"{pages_list}"}
-
+        new_token=jwt.encode(payload,et_key,algorithm="HS256")
+        response.set_cookie(key="Eternitas_pages",value=new_token,httponly=True,samesite="Strict",expires=datetime.now(timezone.utc) + timedelta(days=3650))
+        return {"message":"Private page access granted"}
     
-    new_token=jwt.encode(payload,et_key,algorithm="HS256")
-    response.set_cookie(key="Eternitas_pages",value=new_token,httponly=True,samesite="Strict")
+    else:
+        raise HTTPException(status_code=401)
+        
 
 
         

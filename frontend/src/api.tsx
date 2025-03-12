@@ -1,6 +1,16 @@
 import { Visibility } from "@mui/icons-material";
 import axios from "axios";
 import Swal from "sweetalert2";
+
+type pubproftype = {
+  id: number;
+  First_name: string;
+  Middle_name: string;
+  Last_name: string;
+  Privacy: boolean;
+  Profile_pic: string;
+};
+
 export interface profiledata {
   profileType: string | null;
   firstName: string;
@@ -245,7 +255,13 @@ export const getmedia = async () => {
 export const getpublicmedia = async (id: number) => {
   try {
     const response = await axios
-      .get(`${process.env.REACT_APP_SERVER_ENV}/api/profilemedia/${id}`)
+      .post(
+        `${process.env.REACT_APP_SERVER_ENV}/api/profilemedia/${id}`,
+        {},
+        {
+          withCredentials: true,
+        }
+      )
       .then((res) => {
         return res.data;
       });
@@ -275,7 +291,13 @@ export const getpublicmedia = async (id: number) => {
 export const getpublicprofiledata = async (id: number) => {
   try {
     const response = await axios
-      .get(`${process.env.REACT_APP_SERVER_ENV}/api/profiledata/${id}`)
+      .post(
+        `${process.env.REACT_APP_SERVER_ENV}/api/profiledata/${id}`,
+        {},
+        {
+          withCredentials: true,
+        }
+      )
       .then((res) => {
         return res.data;
       });
@@ -330,11 +352,14 @@ export const deletemedia = async (fname: string) => {
   }
 };
 
-export const changevisibility = async (visibility: boolean) => {
+export const changevisibility = async (
+  visibility: boolean,
+  pagepassword: string
+) => {
   try {
     axios.patch(
       `${process.env.REACT_APP_SERVER_ENV}/api/profile/visibility`,
-      { Privacy: visibility },
+      { Privacy: visibility, Pagepassword: pagepassword },
       { withCredentials: true }
     );
   } catch (error) {
@@ -342,6 +367,21 @@ export const changevisibility = async (visibility: boolean) => {
       icon: "error",
       title: "Oops..",
       text: `Couldn't turn visibility ${visibility ? "Private" : "Public"}`,
+    });
+  }
+};
+
+export const publicprof = async (): Promise<pubproftype[] | undefined> => {
+  try {
+    const response = await axios.get<pubproftype[]>(
+      `${process.env.REACT_APP_SERVER_ENV}/api/publicuserdata`
+    );
+    return response.data;
+  } catch (error) {
+    Swal.fire({
+      icon: "error",
+      title: "Oops..",
+      text: `Couldn't fetch public data of users"}`,
     });
   }
 };
