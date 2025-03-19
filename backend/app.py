@@ -140,10 +140,11 @@ async def register(user: User):
 
     salt=bcrypt.gensalt(rounds=8)
     password=user.password.encode('utf-8')
-    hash=str(bcrypt.hashpw(password, salt))
+    hash=bcrypt.hashpw(password, salt)
+    hashp = base64.b64encode(hash).decode('utf-8')
 
     try:
-        acc=supabase.table("Account").insert([{"created_at":date.today().strftime("%Y-%m-%d"),"email":user.email,"password":hash}]).execute()
+        acc=supabase.table("Account").insert([{"created_at":date.today().strftime("%Y-%m-%d"),"email":user.email,"password":hashp}]).execute()
     except APIError as e:
         raise HTTPException(status_code=400, detail=e.details)
         
@@ -164,13 +165,14 @@ async def registeruser(request:Request):
 
     salt=bcrypt.gensalt(rounds=8)
     password=generate_password()
-    hash=str(bcrypt.hashpw(password.encode('utf-8'), salt))
+    hash=bcrypt.hashpw(password.encode('utf-8'), salt)
+    hashp = base64.b64encode(hash).decode('utf-8')
 
     body=json.loads(raw_body.decode('utf-8'))
     email=body["contact_email"]
 
     try:
-        acc=supabase.table("Account").insert([{"created_at":date.today().strftime("%Y-%m-%d"),"email":email,"password":hash}]).execute()
+        acc=supabase.table("Account").insert([{"created_at":date.today().strftime("%Y-%m-%d"),"email":email,"password":hashp}]).execute()
     except APIError as e:
         print(e)
         raise HTTPException(status_code=400, detail=e.details)
@@ -281,7 +283,7 @@ async def editprofile(request:Request,response:Response):
             raise HTTPException(status_code=401,detail=str(e))
             
         try:
-            memo_info=supabase.table("Memorial_info").select("*").eq("id",payload.get("id")).execute()
+            memo_info=supabase.table("Memorial_info").select("id,First_name,Middle_name,Last_name,Date_of_birth,Date_of_death,Relationship,Description,Profile_pic").eq("id",payload.get("id")).execute()
             return memo_info
             
         except APIError as e:
