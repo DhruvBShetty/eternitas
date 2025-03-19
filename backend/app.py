@@ -8,8 +8,8 @@ import hashlib
 import base64
 import string
 import random
-import botocore
 import uuid
+import botocore
 from pydantic import BaseModel
 import jwt
 from dotenv import load_dotenv
@@ -95,7 +95,7 @@ def checkpassword(password: str = Body(...), uid: int = Body(...)):
             .execute()
         )
     except APIError as e:
-        raise HTTPException(status_code=400, detail=e.details)
+        raise HTTPException(status_code=400, detail=e.details) from e
 
     if memo_info.data == []:
         return False
@@ -116,7 +116,7 @@ def allowview(
             supabase.table("Memorial_info").select("Privacy").eq("id", id).execute()
         )
     except APIError as e:
-        raise HTTPException(status_code=400, detail=e.details)
+        raise HTTPException(status_code=400, detail=e.details) from e
 
     if memo_info.data == []:
         return False
@@ -180,7 +180,7 @@ async def register(user: User):
             .execute()
         )
     except APIError as e:
-        raise HTTPException(status_code=400, detail=e.details)
+        raise HTTPException(status_code=400, detail=e.details) from e
 
     user = supabase.auth.sign_up({"email": user.email, "password": user.password})
     return {
@@ -223,7 +223,7 @@ async def registeruser(request: Request):
             .execute()
         )
     except APIError as e:
-        raise HTTPException(status_code=400, detail=e.details)
+        raise HTTPException(status_code=400, detail=e.details) from e
 
     try:
         user = supabase.auth.sign_up(
@@ -236,7 +236,7 @@ async def registeruser(request: Request):
             }
         )
     except APIError as e:
-        raise HTTPException(status_code=400, detail=e.details)
+        raise HTTPException(status_code=400, detail=e.details) from e
 
 
 @app.post("/api/login")
@@ -246,14 +246,14 @@ async def login(user: User, request: Response):
             {"email": user.email, "password": user.password}
         )
     except Exception as e:
-        raise HTTPException(status_code=e.status, detail=e.message)
+        raise HTTPException(status_code=e.status, detail=e.message) from e
 
     try:
         myuser = (
             supabase.table("Account").select("id").eq("email", user.email).execute()
         )
     except APIError as e:
-        raise HTTPException(status_code=400, detail=e.details)
+        raise HTTPException(status_code=400, detail=e.details) from e
 
     remember_for = 5
 
@@ -285,7 +285,7 @@ async def forgotpassword(email: Email):
             },
         )
     except Exception as e:
-        raise HTTPException(status_code=e.status, detail=e.message)
+        raise HTTPException(status_code=e.status, detail=e.message) from e
 
 
 @app.post("/api/getsession")
@@ -312,7 +312,7 @@ async def updatepassword(request: Request):
     try:
         upd_pass = supabase.auth.update_user({"password": password})
     except Exception as e:
-        raise HTTPException(status_code=e.status, detail=e.message)
+        raise HTTPException(status_code=e.status, detail=e.message) from e
 
     try:
         salt = bcrypt.gensalt(rounds=8)
@@ -325,7 +325,7 @@ async def updatepassword(request: Request):
             .execute()
         )
     except Exception as e:
-        raise HTTPException(status_code=e.status, detail=e.message)
+        raise HTTPException(status_code=e.status, detail=e.message) from e
 
 
 @app.post("/api/createprofile")
@@ -334,7 +334,7 @@ async def createprofile(request: Request):
     try:
         payload = jwt.decode(token, et_key, algorithms=["HS256"])
     except Exception as e:
-        raise HTTPException(status_code=401, detail=str(e))
+        raise HTTPException(status_code=401, detail=str(e)) from e
 
     data = await request.json()
 
@@ -352,7 +352,7 @@ async def createprofile(request: Request):
             }
         ).execute()
     except APIError as e:
-        raise HTTPException(status_code=400, detail=e.details)
+        raise HTTPException(status_code=400, detail=e.details) from e
 
 
 @app.post("/api/logout")
@@ -367,7 +367,7 @@ async def editprofile(request: Request, response: Response):
         payload = jwt.decode(token, et_key, algorithms=["HS256"])
     except Exception as e:
         response.delete_cookie("Eternitas_session")
-        raise HTTPException(status_code=401, detail=str(e))
+        raise HTTPException(status_code=401, detail=str(e)) from e
 
     try:
         memo_info = (
@@ -381,7 +381,7 @@ async def editprofile(request: Request, response: Response):
         return memo_info
 
     except APIError as e:
-        raise HTTPException(status_code=400, detail=e.details)
+        raise HTTPException(status_code=400, detail=e.details) from e
 
     except httpx.ConnectError:
         raise HTTPException(status_code=500, detail="No internet connection")
@@ -393,7 +393,7 @@ def uploadpic(request: Request, file: UploadFile = File(...)):
     try:
         payload = jwt.decode(token, et_key, algorithms=["HS256"])
     except Exception as e:
-        raise HTTPException(status_code=401, detail=str(e))
+        raise HTTPException(status_code=401, detail=str(e)) from e
 
     timestamp = int(datetime.now(timezone.utc).timestamp() * 1000)
 
@@ -406,7 +406,7 @@ def uploadpic(request: Request, file: UploadFile = File(...)):
             .execute()
         )
     except APIError as e:
-        raise HTTPException(status_code=503, detail=e.details)
+        raise HTTPException(status_code=503, detail=e.details) from e
 
     new_fname = str(payload.get("id")) + "/" + "profilepic"
     try:
@@ -433,7 +433,7 @@ async def uploadmedia(request: Request, files: List[UploadFile] = File(...)):
     try:
         payload = jwt.decode(token, et_key, algorithms=["HS256"])
     except Exception as e:
-        raise HTTPException(status_code=401, detail=str(e))
+        raise HTTPException(status_code=401, detail=str(e)) from e
 
     for file in files:
         file_name = str(payload.get("id")) + "/media/" + file.filename
@@ -461,7 +461,7 @@ async def getmedia(request: Request):
     try:
         payload = jwt.decode(token, et_key, algorithms=["HS256"])
     except Exception as e:
-        raise HTTPException(status_code=401, detail=str(e))
+        raise HTTPException(status_code=401, detail=str(e)) from e
 
     folder_prefix = str(payload.get("id")) + "/media/"
 
@@ -490,7 +490,7 @@ def profiledata(id: int, view: bool = Depends(allowview)):
             )
             return memo_info
         except APIError as e:
-            raise HTTPException(status_code=400, detail=e.details)
+            raise HTTPException(status_code=400, detail=e.details) from e
 
     return {"data": []}
 
@@ -518,7 +518,7 @@ async def deletemedia(request: Request, fname: str):
     try:
         payload = jwt.decode(token, et_key, algorithms=["HS256"])
     except Exception as e:
-        raise HTTPException(status_code=401, detail=str(e))
+        raise HTTPException(status_code=401, detail=str(e)) from e
 
     file_name = str(payload.get("id")) + "/media/" + fname
 
@@ -529,7 +529,9 @@ async def deletemedia(request: Request, fname: str):
         raise error
 
     except botocore.exceptions.ParamValidationError as error:
-        raise ValueError("The parameters you provided are incorrect: {}".format(error))
+        raise ValueError(
+            "The parameters you provided are incorrect: {}".format(error)
+        ) from error
 
 
 @app.patch("/api/profile/visibility")
@@ -538,13 +540,13 @@ async def update_profile_visibility(request: Request):
     try:
         payload = jwt.decode(token, et_key, algorithms=["HS256"])
     except Exception as e:
-        raise HTTPException(status_code=401, detail=str(e))
+        raise HTTPException(status_code=401, detail=str(e)) from e
 
     data = await request.json()
     try:
         Privacy = data.get("Privacy")
         pword = data.get("Pagepassword")
-        if Privacy == True and len(pword) > 0:
+        if Privacy is True and len(pword) > 0:
             salt = bcrypt.gensalt()
             hash = bcrypt.hashpw(pword.encode("utf-8"), salt)
             hashp = base64.b64encode(hash).decode("utf-8")
@@ -563,7 +565,7 @@ async def update_profile_visibility(request: Request):
             )
 
     except APIError as e:
-        raise HTTPException(status_code=400, detail=e.details)
+        raise HTTPException(status_code=400, detail=e.details) from e
 
 
 @app.get("/api/publicuserdata")
@@ -577,7 +579,7 @@ def fetch_public_user(response: Response):
         return userdata.data
 
     except APIError as e:
-        raise HTTPException(status_code=400, detail=e.details)
+        raise HTTPException(status_code=400, detail=e.details) from e
 
     except httpx.ConnectError:
         raise HTTPException(status_code=500, detail="No internet connection")
@@ -631,7 +633,7 @@ async def setpcookie(
             try:
                 payload = jwt.decode(token, et_key, algorithms=["HS256"])
             except Exception as e:
-                raise HTTPException(status_code=401, detail=str(e))
+                raise HTTPException(status_code=401, detail=str(e)) from e
 
             anon_id = payload.get("anon_id")
             pages_list = json.loads(payload.get("Pages"))
