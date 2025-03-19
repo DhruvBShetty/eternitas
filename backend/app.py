@@ -129,13 +129,13 @@ def allowview(
             theid = payl.get("id")
             if theid == id:
                 return True
-        except Exception as e:
+        except Exception:
             pass
 
     if Eternitas_pages is not None:
         try:
             payload = jwt.decode(Eternitas_pages, et_key, algorithms=["HS256"])
-        except Exception as e:
+        except Exception:
             return False
 
         if (
@@ -382,8 +382,8 @@ async def editprofile(request: Request, response: Response):
     except APIError as e:
         raise HTTPException(status_code=400, detail=e.details) from e
 
-    except httpx.ConnectError:
-        raise HTTPException(status_code=500, detail="No internet connection")
+    except httpx.ConnectError as e:
+        raise HTTPException(status_code=500, detail="No internet connection") from e
 
 
 @app.post("/api/uploadpic")
@@ -594,7 +594,7 @@ async def verifyp(request: Request):
         if origpayload.get("id") == data.get("uid"):
             return {"message": "Token is valid"}
 
-    except Exception as e:
+    except Exception:
         pass
 
     token = request.cookies.get("Eternitas_pages")
