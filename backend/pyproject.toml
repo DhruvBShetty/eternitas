@@ -5,3 +5,4 @@ known_third_party = ["fastapi", "pydantic"]
 
 [tool.black]
 line-length = 88  # Use the same line length as isort
+skip-string-normalization = true
