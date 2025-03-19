@@ -1,3 +1,18 @@
+import os
+import json
+from datetime import datetime, timedelta, timezone
+from datetime import date
+from typing import List
+import hmac
+import hashlib
+import base64
+import string
+import random
+import botocore
+import uuid
+from pydantic import BaseModel
+import jwt
+from dotenv import load_dotenv
 from fastapi import (
     FastAPI,
     HTTPException,
@@ -11,34 +26,14 @@ from fastapi import (
 )
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-import jwt
-from datetime import datetime, timedelta, timezone
-from dotenv import load_dotenv
 from supabase import create_client
-import os
-from gotrue.errors import AuthApiError
-from datetime import date
 import bcrypt
 from fastapi.security import HTTPBearer
-import json
 from postgrest.exceptions import APIError
 import boto3
 from botocore.exceptions import NoCredentialsError
-import uuid
 import httpx
-from typing import List
-import hmac
-import hashlib
-import base64
-import string
-import random
-import botocore
-import psycopg2
-from uuid import UUID
+
 
 load_dotenv()
 
@@ -126,7 +121,7 @@ def allowview(
     if memo_info.data == []:
         return False
 
-    if memo_info.data[0]["Privacy"] == False:
+    if memo_info.data[0]["Privacy"] is False:
         return True
 
     if Eternitas_session is not None:
@@ -196,7 +191,7 @@ async def register(user: User):
 @app.post("/api/registeruser")
 async def registeruser(request: Request):
     raw_body = await request.body()
-    print(raw_body)
+
     shopify_hmac_header = request.headers.get("x-shopify-hmac-sha256")
     secret = webhook.encode("utf-8")
     computed_hmac = hmac.new(secret, raw_body, hashlib.sha256).digest()
@@ -228,7 +223,6 @@ async def registeruser(request: Request):
             .execute()
         )
     except APIError as e:
-        print(e)
         raise HTTPException(status_code=400, detail=e.details)
 
     try:
@@ -242,7 +236,6 @@ async def registeruser(request: Request):
             }
         )
     except APIError as e:
-        print(e)
         raise HTTPException(status_code=400, detail=e.details)
 
 
@@ -253,7 +246,6 @@ async def login(user: User, request: Response):
             {"email": user.email, "password": user.password}
         )
     except Exception as e:
-        print(e)
         raise HTTPException(status_code=e.status, detail=e.message)
 
     try:
@@ -261,7 +253,6 @@ async def login(user: User, request: Response):
             supabase.table("Account").select("id").eq("email", user.email).execute()
         )
     except APIError as e:
-        print(e)
         raise HTTPException(status_code=400, detail=e.details)
 
     remember_for = 5
@@ -390,7 +381,6 @@ async def editprofile(request: Request, response: Response):
         return memo_info
 
     except APIError as e:
-        print(e)
         raise HTTPException(status_code=400, detail=e.details)
 
     except httpx.ConnectError:
@@ -416,7 +406,6 @@ def uploadpic(request: Request, file: UploadFile = File(...)):
             .execute()
         )
     except APIError as e:
-        print(e)
         raise HTTPException(status_code=503, detail=e.details)
 
     new_fname = str(payload.get("id")) + "/" + "profilepic"
@@ -431,12 +420,10 @@ def uploadpic(request: Request, file: UploadFile = File(...)):
             },
         )
     except NoCredentialsError:
-        print("?")
         return JSONResponse(
             content={"error": "AWS credentials not found"}, status_code=500
         )
     except Exception as e:
-        print(e)
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 
@@ -461,12 +448,10 @@ async def uploadmedia(request: Request, files: List[UploadFile] = File(...)):
                 },
             )
         except NoCredentialsError:
-            print("?")
             return JSONResponse(
                 content={"error": "AWS credentials not found"}, status_code=500
             )
         except Exception as e:
-            print(e)
             return JSONResponse(content={"error": str(e)}, status_code=500)
 
 
@@ -529,12 +514,10 @@ def profilemedia(id: int, view: bool = Depends(allowview)):
 
 @app.delete("/api/deletemedia/{fname}", status_code=204)
 async def deletemedia(request: Request, fname: str):
-    print(fname)
     token = request.cookies.get("Eternitas_session")
     try:
         payload = jwt.decode(token, et_key, algorithms=["HS256"])
     except Exception as e:
-        print(e)
         raise HTTPException(status_code=401, detail=str(e))
 
     file_name = str(payload.get("id")) + "/media/" + fname
@@ -555,7 +538,6 @@ async def update_profile_visibility(request: Request):
     try:
         payload = jwt.decode(token, et_key, algorithms=["HS256"])
     except Exception as e:
-        print(e)
         raise HTTPException(status_code=401, detail=str(e))
 
     data = await request.json()
