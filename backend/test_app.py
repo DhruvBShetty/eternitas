@@ -1,13 +1,14 @@
-from fastapi.testclient import TestClient
-from pydantic import BaseModel
-from postgrest.exceptions import APIError
 import json
-from fastapi import HTTPException
-import supabase
 import os
-from supabase import create_client
-import jwt
 import uuid
+
+import jwt
+import supabase
+from fastapi import HTTPException
+from fastapi.testclient import TestClient
+from postgrest.exceptions import APIError
+from pydantic import BaseModel
+from supabase import create_client
 
 from .app import app
 
