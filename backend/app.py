@@ -1,39 +1,38 @@
-import os
-import json
-from datetime import datetime, timedelta, timezone
-from datetime import date
-from typing import List
-import hmac
-import hashlib
 import base64
-import string
+import hashlib
+import hmac
+import json
+import os
 import random
+import string
 import uuid
+from datetime import date, datetime, timedelta, timezone
+from typing import List
+
+import bcrypt
+import boto3
 import botocore
-from pydantic import BaseModel
+import httpx
 import jwt
+from botocore.exceptions import NoCredentialsError
 from dotenv import load_dotenv
 from fastapi import (
-    FastAPI,
-    HTTPException,
+    Body,
+    Cookie,
     Depends,
+    FastAPI,
+    File,
+    HTTPException,
     Request,
     Response,
-    File,
     UploadFile,
-    Cookie,
-    Body,
 )
-from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from supabase import create_client
-import bcrypt
+from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer
 from postgrest.exceptions import APIError
-import boto3
-from botocore.exceptions import NoCredentialsError
-import httpx
-
+from pydantic import BaseModel
+from supabase import create_client
 
 load_dotenv()
 
