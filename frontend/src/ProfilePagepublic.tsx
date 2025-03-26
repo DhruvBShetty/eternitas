@@ -19,6 +19,7 @@ import Logo from "./logo.png";
 import Namecomp from "./Components/Namecomp";
 import Share from "./Components/Share";
 import { useLocation } from "react-router-dom";
+import PlayCircleFilledWhiteIcon from "@mui/icons-material/PlayCircleFilledWhite";
 
 const theme = createTheme({
   palette: {
@@ -338,7 +339,14 @@ const ProfilePagepublic = () => {
                 >
                   {medialinks !== undefined &&
                     medialinks.map((file, index) => (
-                      <Box>
+                      <Box
+                        sx={{
+                          position: "relative",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
                         {imageExtensions.some((ext) =>
                           file.toLowerCase().endsWith(ext)
                         ) ? (
@@ -359,34 +367,44 @@ const ProfilePagepublic = () => {
                         ) : videoExtensions.some((ext) =>
                             file.toLowerCase().endsWith(ext)
                           ) ? (
-                          <video
-                            title={file.split("/").pop()}
-                            controls
-                            controlsList="nofullscreen"
-                            ref={videoRef}
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              aspectRatio: 1 / 1,
-                              objectFit: "cover",
-                            }}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setmodalpic(imglink + file);
-                              handleOpen();
-                            }}
-                            onPlay={(e) => {
-                              videoRef.current?.pause();
-                              setmodalpic(imglink + file);
-                              handleOpen();
-                            }}
-                          >
-                            <source
-                              src={imglink + file}
-                              type={"video/" + file.split(".").pop()}
+                          <>
+                            <video
+                              title={file.split("/").pop()}
+                              ref={videoRef}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                aspectRatio: 1 / 1,
+                                objectFit: "cover",
+                              }}
+                              onClick={(e) => {
+                                setmodalpic(imglink + file);
+                                handleOpen();
+                              }}
+                              onPlay={(e) => {
+                                setmodalpic(imglink + file);
+                                handleOpen();
+                              }}
+                            >
+                              <source
+                                src={imglink + file}
+                                type={"video/" + file.split(".").pop()}
+                              />
+                              Your browser does not support the video tag.
+                            </video>
+                            <PlayCircleFilledWhiteIcon
+                              sx={{
+                                position: "absolute",
+                                width: "30%",
+                                height: "30%",
+                                color: "white",
+                              }}
+                              onClick={() => {
+                                setmodalpic(imglink + file);
+                                handleOpen();
+                              }}
                             />
-                            Your browser does not support the video tag.
-                          </video>
+                          </>
                         ) : (
                           <Typography variant="body2" sx={{ marginRight: 2 }}>
                             {file}
@@ -422,7 +440,6 @@ const ProfilePagepublic = () => {
                       autoPlay
                       muted
                       controls
-                      ref={videoRef}
                       style={{
                         maxWidth: "85vw",
                         maxHeight: "85vh",

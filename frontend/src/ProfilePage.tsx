@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import square from "./Components/emptysquare.png";
 import AddIcon from "@mui/icons-material/Add";
-import PlayCircleIcon from "@mui/icons-material/PlayCircle";
+import PlayCircleFilledWhiteIcon from "@mui/icons-material/PlayCircleFilledWhite";
 import {
   Container,
   Typography,
@@ -484,7 +484,14 @@ const ProfilePage = () => {
                   }}
                 >
                   {medialinks.map((file, index) => (
-                    <Box>
+                    <Box
+                      sx={{
+                        position: "relative",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
                       {imageExtensions.some((ext) =>
                         file.toLowerCase().endsWith(ext)
                       ) ? (
@@ -505,35 +512,43 @@ const ProfilePage = () => {
                       ) : videoExtensions.some((ext) =>
                           file.toLowerCase().endsWith(ext)
                         ) ? (
-                        <video
-                          title={file.split("/").pop()}
-                          controls
-                          controlsList="nofullscreen novolume"
-                          ref={videoRef}
-                          muted
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            aspectRatio: 1 / 1,
-                            objectFit: "cover",
-                          }}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setmodalpic(imglink + file);
-                            handleOpen();
-                          }}
-                          onPlay={(e) => {
-                            videoRef.current?.pause();
-                            setmodalpic(imglink + file);
-                            handleOpen();
-                          }}
-                        >
-                          <source
-                            src={imglink + file}
-                            type={"video/" + file.split(".").pop()}
+                        <>
+                          <video
+                            title={file.split("/").pop()}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              aspectRatio: 1 / 1,
+                              objectFit: "cover",
+                            }}
+                            onClick={(e) => {
+                              setmodalpic(imglink + file);
+                              handleOpen();
+                            }}
+                            onPlay={(e) => {
+                              setmodalpic(imglink + file);
+                              handleOpen();
+                            }}
+                          >
+                            <source
+                              src={imglink + file}
+                              type={"video/" + file.split(".").pop()}
+                            />
+                            Your browser does not support the video tag.
+                          </video>
+                          <PlayCircleFilledWhiteIcon
+                            sx={{
+                              position: "absolute",
+                              width: "30%",
+                              height: "30%",
+                              color: "white",
+                            }}
+                            onClick={() => {
+                              setmodalpic(imglink + file);
+                              handleOpen();
+                            }}
                           />
-                          Your browser does not support the video tag.
-                        </video>
+                        </>
                       ) : (
                         <Typography variant="body2" sx={{ marginRight: 2 }}>
                           {file}
