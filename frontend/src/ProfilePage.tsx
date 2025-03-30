@@ -513,13 +513,15 @@ const ProfilePage = () => {
                           file.toLowerCase().endsWith(ext)
                         ) ? (
                         <>
-                          <video
+                          <div
                             title={file.split("/").pop()}
                             style={{
                               width: "100%",
                               height: "100%",
                               aspectRatio: 1 / 1,
                               objectFit: "cover",
+                              backgroundColor: "#D3D3D3",
+                              opacity: "65%",
                             }}
                             onClick={(e) => {
                               setmodalpic(imglink + file);
@@ -529,13 +531,7 @@ const ProfilePage = () => {
                               setmodalpic(imglink + file);
                               handleOpen();
                             }}
-                          >
-                            <source
-                              src={imglink + file}
-                              type={"video/" + file.split(".").pop()}
-                            />
-                            Your browser does not support the video tag.
-                          </video>
+                          ></div>
                           <PlayCircleFilledWhiteIcon
                             sx={{
                               position: "absolute",
