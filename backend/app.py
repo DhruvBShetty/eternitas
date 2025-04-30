@@ -280,7 +280,7 @@ async def forgotpassword(email: Email):
         supabase.auth.reset_password_for_email(
             email.email,
             {
-                "redirect_to": "http://localhost:3000/Reset-password",
+                "redirect_to": "https://eternitas-story.ro/Reset-password",
             },
         )
     except Exception as e:
