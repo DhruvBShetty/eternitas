@@ -32,28 +32,38 @@ from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer
 from postgrest.exceptions import APIError
 from pydantic import BaseModel
+from pydantic_settings import BaseSettings
 from supabase import create_client
-
-load_dotenv()
 
 app = FastAPI()
 security = HTTPBearer()
-url = os.environ.get("SUPABASE_URL")
-key = os.environ.get("SUPABASE_KEY")
-et_key = os.environ.get("ETERNITAS_KEY")
-aws_access = os.environ.get("AWS_ACCESS_KEY")
-aws_secret = os.environ.get("AWS_SECRET_KEY")
-aws_bucket = os.environ.get("AWS_S3_BUCKET_NAME")
-aws_region = os.environ.get("AWS_REGION")
-webhook = os.environ.get("SHOPIFY_WEBHOOK_KEY")
 
 
-supabase = create_client(url, key)
+class AppSettings(BaseSettings):
+    SUPABASE_URL: str
+    SUPABASE_KEY: str
+    ETERNITAS_KEY: str
+    AWS_ACCESS_KEY: str
+    AWS_SECRET_KEY: str
+    AWS_S3_BUCKET_NAME: str
+    AWS_REGION: str
+    UIDPASS: str
+    UID2PASS: str
+    SHOPIFY_WEBHOOK_KEY: str
+
+    class Config:
+        env_file = ".env"
+
+
+settings = AppSettings()  # type: ignore
+
+
+supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
 s3_client = boto3.client(
     service_name="s3",
-    region_name=aws_region,
-    aws_access_key_id=aws_access,
-    aws_secret_access_key=aws_secret,
+    region_name=settings.AWS_REGION,
+    aws_access_key_id=settings.AWS_ACCESS_KEY,
+    aws_secret_access_key=settings.AWS_SECRET_KEY,
 )
 
 app.add_middleware(
@@ -125,7 +135,9 @@ def allowview(
 
     if Eternitas_session is not None:
         try:
-            payl = jwt.decode(Eternitas_session, et_key, algorithms=["HS256"])
+            payl = jwt.decode(
+                Eternitas_session, settings.ETERNITAS_KEY, algorithms=["HS256"]
+            )
             theid = payl.get("id")
             if theid == id:
                 return True
@@ -134,7 +146,9 @@ def allowview(
 
     if Eternitas_pages is not None:
         try:
-            payload = jwt.decode(Eternitas_pages, et_key, algorithms=["HS256"])
+            payload = jwt.decode(
+                Eternitas_pages, settings.ETERNITAS_KEY, algorithms=["HS256"]
+            )
         except Exception:
             return False
 
@@ -192,7 +206,7 @@ async def registeruser(request: Request):
     raw_body = await request.body()
 
     shopify_hmac_header = request.headers.get("x-shopify-hmac-sha256")
-    secret = webhook.encode("utf-8")
+    secret = settings.SHOPIFY_WEBHOOK_KEY.encode("utf-8")
     computed_hmac = hmac.new(secret, raw_body, hashlib.sha256).digest()
     computed_hmac_base64 = base64.b64encode(computed_hmac).decode()
 
@@ -264,7 +278,7 @@ async def login(user: User, request: Response):
         "id": myuser.data[0].get("id"),
         "exp": datetime.now(timezone.utc) + timedelta(minutes=remember_for),
     }
-    token = jwt.encode(payload, et_key, algorithm="HS256")
+    token = jwt.encode(payload, settings.ETERNITAS_KEY, algorithm="HS256")
     request.set_cookie(
         key="Eternitas_session",
         value=token,
@@ -292,7 +306,7 @@ async def getsession(request: Request, response: Response):
     token = request.cookies.get("Eternitas_session")
 
     try:
-        payload = jwt.decode(token, et_key, algorithms=["HS256"])
+        payload = jwt.decode(token, settings.ETERNITAS_KEY, algorithms=["HS256"])
         return {"isAuthenticated": True}
     except Exception:
         response.delete_cookie("Eternitas_session")
@@ -331,7 +345,7 @@ async def updatepassword(request: Request):
 async def createprofile(request: Request):
     token = request.cookies.get("Eternitas_session")
     try:
-        payload = jwt.decode(token, et_key, algorithms=["HS256"])
+        payload = jwt.decode(token, settings.ETERNITAS_KEY, algorithms=["HS256"])
     except Exception as e:
         raise HTTPException(status_code=401, detail=str(e)) from e
 
@@ -363,7 +377,7 @@ async def logout(request: Response):
 async def editprofile(request: Request, response: Response):
     token = request.cookies.get("Eternitas_session")
     try:
-        payload = jwt.decode(token, et_key, algorithms=["HS256"])
+        payload = jwt.decode(token, settings.ETERNITAS_KEY, algorithms=["HS256"])
     except Exception as e:
         response.delete_cookie("Eternitas_session")
         raise HTTPException(status_code=401, detail=str(e)) from e
@@ -390,7 +404,7 @@ async def editprofile(request: Request, response: Response):
 def uploadpic(request: Request, file: UploadFile = File(...)):
     token = request.cookies.get("Eternitas_session")
     try:
-        payload = jwt.decode(token, et_key, algorithms=["HS256"])
+        payload = jwt.decode(token, settings.ETERNITAS_KEY, algorithms=["HS256"])
     except Exception as e:
         raise HTTPException(status_code=401, detail=str(e)) from e
 
@@ -411,7 +425,7 @@ def uploadpic(request: Request, file: UploadFile = File(...)):
     try:
         s3_client.upload_fileobj(
             file.file,
-            aws_bucket,
+            settings.AWS_S3_BUCKET_NAME,
             new_fname,
             ExtraArgs={
                 "ACL": "public-read",
@@ -430,7 +444,7 @@ def uploadpic(request: Request, file: UploadFile = File(...)):
 async def uploadmedia(request: Request, files: List[UploadFile] = File(...)):
     token = request.cookies.get("Eternitas_session")
     try:
-        payload = jwt.decode(token, et_key, algorithms=["HS256"])
+        payload = jwt.decode(token, settings.ETERNITAS_KEY, algorithms=["HS256"])
     except Exception as e:
         raise HTTPException(status_code=401, detail=str(e)) from e
 
@@ -439,7 +453,7 @@ async def uploadmedia(request: Request, files: List[UploadFile] = File(...)):
         try:
             s3_client.upload_fileobj(
                 file.file,
-                aws_bucket,
+                settings.AWS_S3_BUCKET_NAME,
                 file_name,
                 ExtraArgs={
                     "ACL": "public-read",
@@ -458,13 +472,15 @@ async def uploadmedia(request: Request, files: List[UploadFile] = File(...)):
 async def getmedia(request: Request):
     token = request.cookies.get("Eternitas_session")
     try:
-        payload = jwt.decode(token, et_key, algorithms=["HS256"])
+        payload = jwt.decode(token, settings.ETERNITAS_KEY, algorithms=["HS256"])
     except Exception as e:
         raise HTTPException(status_code=401, detail=str(e)) from e
 
     folder_prefix = str(payload.get("id")) + "/media/"
 
-    response = s3_client.list_objects_v2(Bucket=aws_bucket, Prefix=folder_prefix)
+    response = s3_client.list_objects_v2(
+        Bucket=settings.AWS_S3_BUCKET_NAME, Prefix=folder_prefix
+    )
 
     # Check if there are any objects in the folder
     if "Contents" in response:
@@ -499,7 +515,9 @@ def profilemedia(id: int, view: bool = Depends(allowview)):
     if view:
         folder_prefix = str(id) + "/media/"
 
-        response = s3_client.list_objects_v2(Bucket=aws_bucket, Prefix=folder_prefix)
+        response = s3_client.list_objects_v2(
+            Bucket=settings.AWS_S3_BUCKET_NAME, Prefix=folder_prefix
+        )
 
         # Check if there are any objects in the folder
         if "Contents" in response:
@@ -515,14 +533,14 @@ def profilemedia(id: int, view: bool = Depends(allowview)):
 async def deletemedia(request: Request, fname: str):
     token = request.cookies.get("Eternitas_session")
     try:
-        payload = jwt.decode(token, et_key, algorithms=["HS256"])
+        payload = jwt.decode(token, settings.ETERNITAS_KEY, algorithms=["HS256"])
     except Exception as e:
         raise HTTPException(status_code=401, detail=str(e)) from e
 
     file_name = str(payload.get("id")) + "/media/" + fname
 
     try:
-        s3_client.delete_object(Bucket=aws_bucket, Key=file_name)
+        s3_client.delete_object(Bucket=settings.AWS_S3_BUCKET_NAME, Key=file_name)
     except botocore.exceptions.ClientError as error:
         # Put your error handling logic here
         raise error
@@ -537,7 +555,7 @@ async def deletemedia(request: Request, fname: str):
 async def update_profile_visibility(request: Request):
     token = request.cookies.get("Eternitas_session")
     try:
-        payload = jwt.decode(token, et_key, algorithms=["HS256"])
+        payload = jwt.decode(token, settings.ETERNITAS_KEY, algorithms=["HS256"])
     except Exception as e:
         raise HTTPException(status_code=401, detail=str(e)) from e
 
@@ -590,7 +608,7 @@ async def verifyp(request: Request):
     data = await request.json()
 
     try:
-        origpayload = jwt.decode(orig, et_key, algorithms=["HS256"])
+        origpayload = jwt.decode(orig, settings.ETERNITAS_KEY, algorithms=["HS256"])
         if origpayload.get("id") == data.get("uid"):
             return {"message": "Token is valid"}
 
@@ -600,7 +618,7 @@ async def verifyp(request: Request):
     token = request.cookies.get("Eternitas_pages")
 
     try:
-        payload = jwt.decode(token, et_key, algorithms=["HS256"])
+        payload = jwt.decode(token, settings.ETERNITAS_KEY, algorithms=["HS256"])
     except Exception as e:
         raise HTTPException(status_code=401, detail=str(e))
 
@@ -630,7 +648,9 @@ async def setpcookie(
             payload = {"anon_id": str(guest_id), "Pages": f"[{usernameid}]"}
         else:
             try:
-                payload = jwt.decode(token, et_key, algorithms=["HS256"])
+                payload = jwt.decode(
+                    token, settings.ETERNITAS_KEY, algorithms=["HS256"]
+                )
             except Exception as e:
                 raise HTTPException(status_code=401, detail=str(e)) from e
 
@@ -640,7 +660,7 @@ async def setpcookie(
 
             payload = {"anon_id": anon_id, "Pages": f"{pages_list}"}
 
-        new_token = jwt.encode(payload, et_key, algorithm="HS256")
+        new_token = jwt.encode(payload, settings.ETERNITAS_KEY, algorithm="HS256")
         response.set_cookie(
             key="Eternitas_pages",
             value=new_token,
