@@ -195,7 +195,9 @@ async def register(user: User):
     except APIError as e:
         raise HTTPException(status_code=400, detail=e.details) from e
 
-    user = supabase.auth.sign_up({"email": user.email, "password": user.password})
+    userdetails = supabase.auth.sign_up(
+        {"email": user.email, "password": user.password}
+    )
     return {
         "message": "Registration successful. Please check your email to verify your account."
     }
@@ -206,6 +208,9 @@ async def registeruser(request: Request):
     raw_body = await request.body()
 
     shopify_hmac_header = request.headers.get("x-shopify-hmac-sha256")
+    if not shopify_hmac_header:
+        raise HTTPException(400, "Missing HMAC header")
+
     secret = settings.SHOPIFY_WEBHOOK_KEY.encode("utf-8")
     computed_hmac = hmac.new(secret, raw_body, hashlib.sha256).digest()
     computed_hmac_base64 = base64.b64encode(computed_hmac).decode()
