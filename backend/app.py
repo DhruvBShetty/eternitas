@@ -30,6 +30,7 @@ from fastapi import (
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer
+from jwt import InvalidTokenError
 from postgrest.exceptions import APIError
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings
@@ -264,7 +265,9 @@ async def login(user: User, request: Response):
             {"email": user.email, "password": user.password}
         )
     except Exception as e:
-        raise HTTPException(status_code=e.status, detail=e.message) from e
+        raise HTTPException(
+            status_code=400, detail="Email or Password is incorrect"
+        ) from e
 
     try:
         myuser = (
@@ -288,7 +291,7 @@ async def login(user: User, request: Response):
         key="Eternitas_session",
         value=token,
         httponly=True,
-        samesite="Strict",
+        samesite="strict",
         expires=datetime.now(timezone.utc) + timedelta(minutes=remember_for),
     )
 
@@ -303,17 +306,21 @@ async def forgotpassword(email: Email):
             },
         )
     except Exception as e:
-        raise HTTPException(status_code=e.status, detail=e.message) from e
+        raise HTTPException(
+            status_code=502, detail="Service for resetting email failed"
+        ) from e
 
 
 @app.post("/api/getsession")
 async def getsession(request: Request, response: Response):
     token = request.cookies.get("Eternitas_session")
+    if not token:
+        raise HTTPException(400, "No session was found")
 
     try:
         payload = jwt.decode(token, settings.ETERNITAS_KEY, algorithms=["HS256"])
         return {"isAuthenticated": True}
-    except Exception:
+    except InvalidTokenError:
         response.delete_cookie("Eternitas_session")
         return {"isAuthenticated": False}
 
@@ -670,7 +677,7 @@ async def setpcookie(
             key="Eternitas_pages",
             value=new_token,
             httponly=True,
-            samesite="Strict",
+            samesite="strict",
             expires=datetime.now(timezone.utc) + timedelta(days=3650),
         )
         return {"message": "Private page access granted"}
