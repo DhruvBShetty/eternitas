@@ -398,7 +398,7 @@ async def editprofile(request: Request, response: Response):
         memo_info = (
             supabase.table("Memorial_info")
             .select(
-                "id,First_name,Middle_name,Last_name,Date_of_birth,Date_of_death,Relationship,Description,Profile_pic"
+                "id,First_name,Middle_name,Last_name,Date_of_birth,Date_of_death,Relationship,Description,Profile_pic,Privacy"
             )
             .eq("id", payload.get("id"))
             .execute()
