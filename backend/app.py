@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import hashlib
 import hmac
@@ -7,8 +8,10 @@ import random
 import string
 import uuid
 from datetime import date, datetime, timedelta, timezone
+from io import BytesIO
 from typing import List
 
+import aioboto3
 import bcrypt
 import boto3
 import botocore
@@ -51,12 +54,14 @@ class AppSettings(BaseSettings):
     UIDPASS: str
     UID2PASS: str
     SHOPIFY_WEBHOOK_KEY: str
+    CONCURRENT_UPLOADS: int
 
     class Config:
         env_file = ".env"
 
 
 settings = AppSettings()  # type: ignore
+upload_sem = asyncio.Semaphore(settings.CONCURRENT_UPLOADS)
 
 
 supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
@@ -66,6 +71,7 @@ s3_client = boto3.client(
     aws_access_key_id=settings.AWS_ACCESS_KEY,
     aws_secret_access_key=settings.AWS_SECRET_KEY,
 )
+aioboto_session = aioboto3.Session()
 
 app.add_middleware(
     CORSMiddleware,
@@ -455,29 +461,74 @@ def uploadpic(request: Request, file: UploadFile = File(...)):
 @app.post("/api/uploadmedia")
 async def uploadmedia(request: Request, files: List[UploadFile] = File(...)):
     token = request.cookies.get("Eternitas_session")
+    if not token:
+        raise HTTPException(400, "No session was found")
+
     try:
         payload = jwt.decode(token, settings.ETERNITAS_KEY, algorithms=["HS256"])
     except Exception as e:
         raise HTTPException(status_code=401, detail=str(e)) from e
 
-    for file in files:
-        file_name = str(payload.get("id")) + "/media/" + file.filename
-        try:
-            s3_client.upload_fileobj(
-                file.file,
-                settings.AWS_S3_BUCKET_NAME,
-                file_name,
-                ExtraArgs={
-                    "ACL": "public-read",
-                    "ContentType": file.content_type,  # Use content type provided by the client
-                },
-            )
-        except NoCredentialsError:
-            return JSONResponse(
-                content={"error": "AWS credentials not found"}, status_code=500
-            )
-        except Exception as e:
-            return JSONResponse(content={"error": str(e)}, status_code=500)
+    user_id = payload.get("id")
+    if user_id is None:
+        raise HTTPException(400, "User Id is missing")
+
+    async def upload_file(file: UploadFile, aioclient):
+        file_name = f"{user_id}/media/{file.filename}"
+        contents = await file.read()
+        file_stream = BytesIO(contents)
+
+        await aioclient.upload_fileobj(
+            file_stream,
+            settings.AWS_S3_BUCKET_NAME,
+            file_name,
+            ExtraArgs={
+                "ACL": "public-read",
+                "ContentType": file.content_type,
+            },
+        )
+
+        return file.filename
+
+    try:
+        async with aioboto_session.client(
+            service_name="s3",
+            region_name=settings.AWS_REGION,
+            aws_access_key_id=settings.AWS_ACCESS_KEY,  # type:ignore
+            aws_secret_access_key=settings.AWS_SECRET_KEY,
+        ) as aioclient:
+            async with upload_sem:
+                result = await asyncio.gather(
+                    *(upload_file(file, aioclient) for file in files)
+                )
+
+    except NoCredentialsError:
+        return JSONResponse(
+            content={"error": "AWS credentials not found"}, status_code=500
+        )
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+    return result
+
+    # for file in files:
+    #     file_name = f"{user_id}/media/{file.filename}"
+    #     try:
+    #         s3_client.upload_fileobj(
+    #             file.file,
+    #             settings.AWS_S3_BUCKET_NAME,
+    #             file_name,
+    #             ExtraArgs={
+    #                 "ACL": "public-read",
+    #                 "ContentType": file.content_type,  # Use content type provided by the client
+    #             },
+    #         )
+    #     except NoCredentialsError:
+    #         return JSONResponse(
+    #             content={"error": "AWS credentials not found"}, status_code=500
+    #         )
+    #     except Exception as e:
+    #         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 
 @app.get("/api/getmedia")
