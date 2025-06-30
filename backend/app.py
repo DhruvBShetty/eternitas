@@ -474,21 +474,22 @@ async def uploadmedia(request: Request, files: List[UploadFile] = File(...)):
         raise HTTPException(400, "User Id is missing")
 
     async def upload_file(file: UploadFile, aioclient):
-        file_name = f"{user_id}/media/{file.filename}"
-        contents = await file.read()
-        file_stream = BytesIO(contents)
+        async with upload_sem:
+            file_name = f"{user_id}/media/{file.filename}"
+            contents = await file.read()
+            file_stream = BytesIO(contents)
 
-        await aioclient.upload_fileobj(
-            file_stream,
-            settings.AWS_S3_BUCKET_NAME,
-            file_name,
-            ExtraArgs={
-                "ACL": "public-read",
-                "ContentType": file.content_type,
-            },
-        )
+            await aioclient.upload_fileobj(
+                file_stream,
+                settings.AWS_S3_BUCKET_NAME,
+                file_name,
+                ExtraArgs={
+                    "ACL": "public-read",
+                    "ContentType": file.content_type,
+                },
+            )
 
-        return file.filename
+            return file.filename
 
     try:
         async with aioboto_session.client(
@@ -497,10 +498,9 @@ async def uploadmedia(request: Request, files: List[UploadFile] = File(...)):
             aws_access_key_id=settings.AWS_ACCESS_KEY,  # type:ignore
             aws_secret_access_key=settings.AWS_SECRET_KEY,
         ) as aioclient:
-            async with upload_sem:
-                result = await asyncio.gather(
-                    *(upload_file(file, aioclient) for file in files)
-                )
+            result = await asyncio.gather(
+                *(upload_file(file, aioclient) for file in files)
+            )
 
     except NoCredentialsError:
         return JSONResponse(
