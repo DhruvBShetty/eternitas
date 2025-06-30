@@ -476,11 +476,9 @@ async def uploadmedia(request: Request, files: List[UploadFile] = File(...)):
     async def upload_file(file: UploadFile, aioclient):
         async with upload_sem:
             file_name = f"{user_id}/media/{file.filename}"
-            contents = await file.read()
-            file_stream = BytesIO(contents)
 
             await aioclient.upload_fileobj(
-                file_stream,
+                file.file,
                 settings.AWS_S3_BUCKET_NAME,
                 file_name,
                 ExtraArgs={
